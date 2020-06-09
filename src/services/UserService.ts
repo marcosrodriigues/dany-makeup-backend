@@ -1,6 +1,7 @@
 import database from '../database/connection';
 import IUser from '../interface/IUser';
 import Crypto from '../util/crypto';
+import { Request } from 'express';
 
 const crypt = new Crypto();
 
@@ -11,7 +12,7 @@ class UserService {
     }
 
     async findOne(id: number) {
-        const user = await database('users').where('id', '=', id).select('*');
+        const user = await database('users').where('id', '=', id).select('*').first();
         return user;
     }
 
@@ -22,8 +23,21 @@ class UserService {
 
     async save(user: IUser) {
         const saved = await database('users').insert(user);
-        console.log(saved);
-        return user;
+        return saved;
+    }
+
+    async update(user :IUser) {
+        try {
+            if (user.id) {
+                const updated = await database('users').update(user).where("id", '=', user.id);
+                return updated;
+            }
+            console.log("ID not found on update user");
+            return undefined;
+        } catch (err) {
+            console.log(err);
+            return undefined;
+        }
     }
 
     async verifyMail(email: string) {
@@ -33,6 +47,17 @@ class UserService {
             return false;
 
         return true;
+    }
+
+    async findMe(request: Request) {
+        try {
+            const { userId } = request;
+            const user = await this.findOne(userId);
+            return user;
+        } catch (err) {
+            console.log("error userService.findMe: " + err);
+            return undefined;
+        }
     }
 
     async login(email: string, password: string) {
