@@ -3,12 +3,13 @@ import Knex from 'knex';
 export async function up(knex: Knex) {
     return knex.schema.createTable('users', table => {
         table.increments('id').primary();
-        table.string('image').notNullable();
         table.string('name').notNullable();
         table.string('email').notNullable();
-        table.string('whatsapp').notNullable();
-        table.string('city').notNullable();
-        table.string('uf', 2).notNullable();
+        table.string('password').notNullable();
+        table.string('image');
+        table.string('whatsapp');
+        table.string('city');
+        table.string('uf', 2);
     });
 }
 

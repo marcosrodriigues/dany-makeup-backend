@@ -13,7 +13,7 @@ module.exports = async (req: Request, res: Response, next: NextFunction) => {
     const [scheme, token] = authHeader.split(' ');
 
     try {
-        const decoded = await promisify(jwt.verify)(token, "dany_makeup_api");
+        const decoded = await promisify(jwt.verify)(token, "[__dany_makeup_jwt_secret__]");
 
         req.userId = decoded.id;
 
