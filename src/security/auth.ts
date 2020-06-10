@@ -7,6 +7,7 @@ module.exports = async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {
+        console.log('No token provided!');
         return res.status(401).send({ error: 'No token provided! '});
     }
 
@@ -19,6 +20,7 @@ module.exports = async (req: Request, res: Response, next: NextFunction) => {
 
         return next();
     } catch (err) {
+        console.log(err);
         return res.status(401).json({ error: 'Token invalid'});
     }
 }

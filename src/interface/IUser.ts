@@ -2,11 +2,10 @@ interface IUser {
     id?: number,
     name: string,
     email: string,
-    password: string,
+    password?: string,
     image?: string,
     whatsapp?: string,
-    city?: string,
-    uf?: string
+    fb_id?: string,
 }
 
 export default IUser;

@@ -5,11 +5,10 @@ export async function up(knex: Knex) {
         table.increments('id').primary();
         table.string('name').notNullable();
         table.string('email').notNullable();
-        table.string('password').notNullable();
+        table.string('password');
         table.string('image');
         table.string('whatsapp');
-        table.string('city');
-        table.string('uf', 2);
+        table.string('fb_id');
     });
 }
 

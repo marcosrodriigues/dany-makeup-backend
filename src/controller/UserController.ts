@@ -4,6 +4,7 @@ import UserService from '../services/UserService';
 import generateToken from '../security/utilJwt';
 import IUser from '../interface/IUser';
 import UtilJwt from '../security/utilJwt';
+import Knex from 'knex';
 
 const service = new UserService();
 const crypt = new Crypto();
@@ -18,28 +19,70 @@ class UserControlloer {
     async show(request: Request, response: Response) {
         response.json({ page: 'show' })
     }
+    async facebookId(request: Request, response: Response) {
+        const {
+            fb_id
+        } = request.params;
+        
+        if (!fb_id) {
+            console.log("Facebook_ID not provided");
+            return response.status(400).json({ error: 'Facebook ID not provided' });
+        }
+
+        const user = await service.findByFacebookId(fb_id);
+        
+        if (!user) {
+            console.log("User not found with fb_id: " + fb_id);
+            return response.status(400).json({ error: 'User not found' });
+        }
+
+        const token = utilJwt.generateToken(user.id);
+
+        return response.json({ user, token });
+    }
     async store(request: Request, response: Response) {
         const { 
             name, 
             email, 
-            password 
+            password,
+            image,
+            fb_id,
+            whatsapp
         } = request.body;
 
-        const emailValid = await service.verifyMail(email);
-
-        if (!emailValid) return response.status(401).json({error: 'Email already used!'})
-
-        const password_encrypted = await crypt.encrypt(password);
-
+        
         try {
+
+            const emailValid = await service.verifyMail(email);
+            if (!emailValid) {
+                console.log("Email ja usado: " + email);
+                return response.status(401).json({error: 'Email already used!'})
+            }
+            
+            
+            if (fb_id !== undefined) {
+                const fbIdUser = await service.findByFacebookId(fb_id);
+                
+                if(fbIdUser) {
+                    console.log("Conta do facebook da usada: " + fb_id);
+                    return response.status(401).json({error: 'Conta do Facebook já está sendo usada!'});
+                }
+            }
+
+            const password_encrypted = password ? await crypt.encrypt(password) : undefined;
+
             const user = await service.save({
                 name, 
                 email, 
-                password: password_encrypted
+                password: password_encrypted,
+                image,
+                fb_id,
+                whatsapp
             });
 
             return response.json(user);
         } catch (err) {
+            console.log(err);
             return response.status(400).json({ error: 'Unable to store user: ' + err });
         }
     }
@@ -47,19 +90,19 @@ class UserControlloer {
     async update(request: Request, response: Response) { 
         try {
             const me = await service.findMe(request);
-            let { id, name, email, whatsapp, password, image } = request.body;
-
-            console.log(me);
+            let { id, name, email, whatsapp, password, image, fb_id } = request.body;
 
             if (!me) return response.status(400).json({ error: 'Operation unathorization. Not possible to get user online'});
             if (me.id != id) return response.status(400).json({ error: 'Operation unathorization. Seems you\' not the own of this account'});
 
-            if (password != me.password) {
-                password = crypt.encrypt(password);
+            if (password && me.password) {
+                if (password != me.password) {
+                    password = crypt.encrypt(password);
+                }
             }
 
             const user = await service.update({
-                id, name, email, whatsapp, password, image
+                id, name, email, whatsapp, password, image, fb_id
             });
 
             return response.json(user);
@@ -71,8 +114,6 @@ class UserControlloer {
     }
     async login(request: Request, response: Response) {
         const { email, password } = request.body;
-
-        console.log(email, password);
 
         const user = await service.login(email, password);
 

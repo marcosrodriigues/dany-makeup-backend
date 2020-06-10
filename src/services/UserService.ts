@@ -49,6 +49,11 @@ class UserService {
         return true;
     }
 
+    async findByFacebookId(fb_id: string) {
+        const user = await database('users').where('fb_id', '=', fb_id).select('*').first();
+        return user ? user : undefined;
+    }
+
     async findMe(request: Request) {
         try {
             const { userId } = request;
