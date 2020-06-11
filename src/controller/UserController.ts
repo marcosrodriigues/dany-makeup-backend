@@ -2,9 +2,7 @@ import { Request, Response } from 'express';
 import Crypto from '../util/crypto';
 import UserService from '../services/UserService';
 import generateToken from '../security/utilJwt';
-import IUser from '../interface/IUser';
 import UtilJwt from '../security/utilJwt';
-import Knex from 'knex';
 
 const service = new UserService();
 const crypt = new Crypto();
@@ -36,10 +34,11 @@ class UserControlloer {
             return response.status(400).json({ error: 'User not found' });
         }
 
-        const token = utilJwt.generateToken(user.id);
+        const token = await utilJwt.generateToken(user.id);
 
         return response.json({ user, token });
     }
+    
     async store(request: Request, response: Response) {
         const { 
             name, 
@@ -95,10 +94,8 @@ class UserControlloer {
             if (!me) return response.status(400).json({ error: 'Operation unathorization. Not possible to get user online'});
             if (me.id != id) return response.status(400).json({ error: 'Operation unathorization. Seems you\' not the own of this account'});
 
-            if (password && me.password) {
-                if (password != me.password) {
-                    password = crypt.encrypt(password);
-                }
+            if (password !== me.password) {
+                password = await crypt.encrypt(password);
             }
 
             const user = await service.update({
