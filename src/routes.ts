@@ -9,9 +9,12 @@ const uploads = multer(MulterConfig);
 
 import UserController from './controller/UserController';
 import CategoryController from './controller/CategoryController';
+import ProductController from './controller/ProductController';
+
 
 const userController = new UserController();
 const categoryController = new CategoryController();
+const productController = new ProductController();
 
 routes.get('/users', userController.index);
 
@@ -25,6 +28,12 @@ routes.get('/categorys/:id', categoryController.show)
 routes.post('/categorys', uploads.single('image'), categoryController.store)
 routes.put('/categorys', uploads.single('image'), categoryController.update)
 routes.delete('/categorys/:id', categoryController.delete)
+
+routes.get('/products', productController.index)
+routes.get('/products/:id', productController.show)
+routes.post('/products', uploads.array('images[]'), productController.store)
+routes.put('/products', uploads.array('images[]'), productController.update)
+routes.delete('/products/:id', productController.delete)
 
 routes.use(auth);
 routes.get('/auth/me', userController.me);

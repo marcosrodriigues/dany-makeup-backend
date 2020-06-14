@@ -6,7 +6,15 @@ const service = new CategoryService();
 
 class CategoryController {
     async index(request: Request, response: Response) {
+        const { available } = request.query;
+
         const all = await service.findAll();
+
+        if (available) {
+            const filtered = await all.filter(cat => cat.available);
+            return response.json(filtered);
+        }
+
         return response.json(all)
     }
 
@@ -60,7 +68,7 @@ class CategoryController {
         if (category) 
             await service.delete(Number(id));
 
-        return response.json({ status: 'deleted' })
+        return response.status(200);
     }
 
     

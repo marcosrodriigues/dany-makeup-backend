@@ -9,6 +9,7 @@ export async function up(knex: Knex) {
         table.string('image');
         table.string('whatsapp');
         table.string('fb_id');
+        table.boolean('removed').defaultTo(false);
     });
 }
 

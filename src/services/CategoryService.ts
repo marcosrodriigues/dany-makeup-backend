@@ -3,13 +3,13 @@ import ICategory from '../interface/ICategory';
 import { SERVER_IP } from '../config/info';
 
 class CategoryService {
-    async findAll() {
+    async findAll(available?: boolean) {
         const all = await database('categorys').select('*');
         return all;
     }
 
     async countProductIn(id: number) {
-        
+
     }
 
     async findOne(id: number) {

@@ -6,6 +6,7 @@ export async function up(knex: Knex) {
         table.string('title').notNullable();
         table.string('image_url').notNullable();
         table.boolean('available').notNullable();
+        table.boolean('removed').defaultTo(false);
     });
 }
 
