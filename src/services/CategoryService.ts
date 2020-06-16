@@ -8,10 +8,6 @@ class CategoryService {
         return all;
     }
 
-    async countProductIn(id: number) {
-
-    }
-
     async findOne(id: number) {
         const one = await database('categorys').where('id', '=', id).select('*').first();
         return one;

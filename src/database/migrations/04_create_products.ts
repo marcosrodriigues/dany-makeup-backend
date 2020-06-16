@@ -11,6 +11,9 @@ export async function up(knex: Knex) {
         table.string('shortDescription');
         table.text('fullDescription');
         table.boolean('removed').defaultTo(false);
+
+        table.integer('manufacturer_id').unsigned();
+        table.foreign('manufacturer_id').references('manufacturers.id');
     });
 }
 

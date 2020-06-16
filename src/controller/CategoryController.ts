@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import CategoryService from '../services/CategoryService';
 
-
 const service = new CategoryService();
 
 class CategoryController {

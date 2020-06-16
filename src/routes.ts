@@ -10,11 +10,13 @@ const uploads = multer(MulterConfig);
 import UserController from './controller/UserController';
 import CategoryController from './controller/CategoryController';
 import ProductController from './controller/ProductController';
+import ManufacturerController from './controller/ManufacturerController';
 
 
 const userController = new UserController();
 const categoryController = new CategoryController();
 const productController = new ProductController();
+const manufacturerController = new ManufacturerController();
 
 routes.get('/users', userController.index);
 
@@ -22,6 +24,12 @@ routes.get('/users/:id', userController.show);
 routes.post('/users', userController.store);
 routes.post('/auth/login', userController.login);
 routes.post('/auth/facebook/:fb_id', userController.facebookId)
+
+routes.get('/manufacturers', manufacturerController.index)
+routes.get('/manufacturers/:id', manufacturerController.show)
+routes.post('/manufacturers', uploads.single('image'), manufacturerController.store)
+routes.put('/manufacturers', uploads.single('image'), manufacturerController.update)
+routes.delete('/manufacturers/:id', manufacturerController.delete)
 
 routes.get('/categorys', categoryController.index)
 routes.get('/categorys/:id', categoryController.show)
