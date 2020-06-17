@@ -3,9 +3,21 @@ import ICategory from '../interface/ICategory';
 import { SERVER_IP } from '../config/info';
 
 class CategoryService {
-    async findAll(available?: boolean) {
-        const all = await database('categorys').select('*');
-        return all;
+    async findAll(title = "", limit = 10, offset = 0) {
+        var query = database('categorys').select('*')
+        var queryCount = database('categorys').count('id', { as : 'count'});
+
+        if (title !== "") {
+            query.where('title', 'like', `%${title}%`);
+            queryCount.where('title', 'like', `%${title}%`);
+        }
+
+        query.limit(limit).offset(offset);
+
+        const categorys = await query;
+        const counter = await queryCount;
+
+        return { categorys, count: counter[0].count  };
     }
 
     async findOne(id: number) {
