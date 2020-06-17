@@ -11,16 +11,22 @@ class ManufacturerController {
         const { 
             page = 1,
             name = '',
-            limit = 10,
+            limit = 5,
          } = request.query;
 
          const offset = Number(limit) * (Number(page) - 1);
 
-         const { manufacturers, count } = await service.findAll(String(name), Number(limit), offset);
+         try {
+            const { manufacturers, count } = await service.findAll(String(name), Number(limit), offset);
 
-         response.setHeader("x-total-count", Number(count));
-         response.setHeader("Access-Control-Expose-Headers", "x-total-count");
-         return response.json(manufacturers);
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            return response.json(manufacturers);
+         } catch (err) {
+            console.log("erro index manufacturer controller", err)
+            return response.status(400).json({ error: err });
+         }
+         
     }
 
     async show (request: Request, response: Response) {
@@ -28,9 +34,13 @@ class ManufacturerController {
 
         if (!id) return response.status(400).json({ message: 'No manufacturer provided' })
 
-        const one = await service.findOne(Number(id));
-        return response.json(one);
-
+        try {
+            const one = await service.findOne(Number(id));
+            return response.json(one);
+        } catch (err) {
+            console.log("erro show manufacturer controller", err)
+            return response.status(400).json({ error: err });
+         }
     }
 
     async store (request: Request, response: Response) {
@@ -52,7 +62,7 @@ class ManufacturerController {
     
             return response.json(manufactured);
         } catch( err) {
-            console.log(err);
+            console.log("erro store manufacturer controller", err)
             return response.status(400).json(err);
         }
     }
@@ -70,9 +80,13 @@ class ManufacturerController {
         let manufacturer: any = { id, name, description, image_url };
         
         if (file) {
-
-            const manufacture = await service.findOne(id);
-            await fileService.remove(manufacture.image_url)
+            try {
+                const manufacture = await service.findOne(id);
+                await fileService.remove(manufacture.image_url)
+            } catch (err) {
+                console.log("erro update (file) manufacturer controller", err)
+                return response.status(400).json({ error: err });
+            }
 
             manufacturer = {
                 ...manufacturer,
@@ -80,12 +94,36 @@ class ManufacturerController {
             }
         }
 
-        const saved = await service.update(manufacturer);
-        return response.json(saved);
+        try {
+            const saved = await service.update(manufacturer);
+            return response.json(saved);
+        } catch (err) {
+            console.log("erro update manufacturer controller", err)
+            return response.status(400).json({ error: err });
+        }
+        
     }
 
     async delete (request: Request, response: Response) {
+        const { id } = request.params;
 
+        if (!id) return response.status(400).json({ error: 'No manufacturer provider!' });
+
+        try {
+            const manufacture = await service.findOne(Number(id));
+            await fileService.remove(manufacture.image_url)
+        } catch (err) {
+            console.log("erro delete (file) manufacturer controller", err)
+            return response.status(400).json({ error: err });
+        }
+
+        try {
+            await service.delete(Number(id));
+            return response.json({ status: 'deleted' });
+        } catch (err) {
+            console.log("erro delete manufacturer controller", err);
+            return response.status(400).json({ error: err });
+        }
     }
 }
 

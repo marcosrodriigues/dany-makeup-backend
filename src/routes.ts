@@ -12,7 +12,6 @@ import CategoryController from './controller/CategoryController';
 import ProductController from './controller/ProductController';
 import ManufacturerController from './controller/ManufacturerController';
 
-
 const userController = new UserController();
 const categoryController = new CategoryController();
 const productController = new ProductController();

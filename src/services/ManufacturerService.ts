@@ -27,15 +27,32 @@ class ManufacturerService {
     }
 
     async store(manufacturer: IManufacturer) {
-        const id = await connection('manufacturers').insert(manufacturer);
-        return await connection('manufacturers').where('id', id).first('*');
+        try {
+            const id = await connection('manufacturers').insert(manufacturer);
+            return await connection('manufacturers').where('id', id).first('*');
+        } catch (err) {
+            throw err;
+        }
     }
 
     async update(manufacturer: IManufacturer) {
         if (!manufacturer.id) return undefined;
 
-        const id = await connection('manufacturers').where('id', manufacturer.id).update(manufacturer);
-        return await connection('manufacturers').where('id', id);
+        try {
+            const id = await connection('manufacturers').where('id', manufacturer.id).update(manufacturer);
+            return await connection('manufacturers').where('id', id).select('*');
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async delete(id: number) {
+        try {
+            await connection('manufacturers').where('id', id).delete();
+            return { status: 'deleted' };
+        } catch (err) {
+            throw err;
+        }
     }
 }
 
