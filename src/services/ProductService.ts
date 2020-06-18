@@ -1,16 +1,40 @@
 import IProduct from '../interface/IProduct';
 import { SERVER_IP } from '../config/info';
 import connection from '../database/connection';
+import ManufacturerService from './ManufacturerService';
+
+const manufacturerService = new ManufacturerService();
 
 class ProductService {
-    async findAll() {
+    async findAll(input = "", limit = 5, offset = 0) {
         try {
-            const products = await connection('products')
+            const query = connection('products')
+                .join('manufacturers', 'manufacturers.id', 'products.manufacturer_id')
                 .where('products.removed', false)
                 .distinct()
-                .select('products.*');
+                .select(['products.*'])
+
+            const queryCount = connection('products')
+            .join('manufacturers', 'manufacturers.id', 'products.manufacturer_id')
+                .where('products.removed', false)
+                .distinct()
+                .count('products.id', { as : 'count' })
+
+            if(input !== "") {
+                query.andWhere('title', 'like', `%${input}%`);
+                queryCount.andWhere('title', 'like', `%${input}%`);
+
+                query.orWhere('shortDescription', 'like', `%${input}%`);
+                queryCount.orWhere('shortDescription', 'like', `%${input}%`);
+
+                query.orWhere('fullDescription', 'like', `%${input}%`);
+                queryCount.orWhere('fullDescription', 'like', `%${input}%`);
+            }
+
+            const filteredProducts = await query;
+            const counter = await queryCount;
     
-            const parsed_products = await Promise.all(products
+            const products = await Promise.all(filteredProducts
                 .map(async product => {
                     const categorys = await connection('categorys')
                         .join('category_product', 'category_product.category_id', 'categorys.id')
@@ -23,12 +47,15 @@ class ProductService {
                         .where('product_images.product_id', product.id)
                         .distinct()
                         .select('product_images.*');
+
+                    const manufacturer = await manufacturerService.findOne(product.manufacturer_id);
+                    product.manufacturer = manufacturer;
                         
                     return {product, categorys, images};
                 })
             );
 
-            return parsed_products;
+            return { products, count: counter[0].count };
         } catch (err) {
             throw err;
         }
@@ -68,6 +95,7 @@ class ProductService {
                 available: Boolean(product.available),
                 mainImage: product.mainImage,
                 value: Number(product.value).toFixed(2),
+                manufacturer_id: product.manufacturer.id
             });
 
             const images = product.images

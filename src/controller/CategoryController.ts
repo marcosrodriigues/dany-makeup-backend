@@ -10,17 +10,24 @@ class CategoryController {
         const {
             page = 1,
             title = '',
-            limit = 5
+            limit = 5,
+            filter = true
         } = request.query;
 
         const offset = Number(limit) * (Number(page) - 1);
 
         try {
-            const { categorys, count } = await service.findAll(String(title), Number(limit), offset);
+            if (filter === true) {
+                const { categorys, count } = await service.findAll(String(title), Number(limit), offset);
 
-            response.setHeader("x-total-count", Number(count));
-            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+                response.setHeader("x-total-count", Number(count));
+                response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+                return response.json(categorys);
+            }
+
+            const categorys = await service.findWithoutFilter();
             return response.json(categorys);
+            
          } catch (err) {
             console.log("erro index category controller", err)
             return response.status(400).json({ error: err });
@@ -70,10 +77,11 @@ class CategoryController {
             description,
             image_url
         } = request.body;
+        const available = request.body.available === "true";
 
         const { file } = request;
 
-        let category: any = { id, title, description, image_url };
+        let category: any = { id, title, description, image_url, available };
         
         if (file) {
             try {

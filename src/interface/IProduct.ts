@@ -1,4 +1,5 @@
 import ICategory from "./ICategory";
+import IManufacturer from "./IManufacturer";
 
 interface IProduct {
     id?: number,
@@ -10,7 +11,8 @@ interface IProduct {
     available: boolean,
     categorys?: ICategory[],
     mainImage: string,
-    images: string[]
+    images: string[],
+    manufacturer: IManufacturer
 }
 
 export default IProduct;

@@ -2,6 +2,11 @@ import IManufacturer from "../interface/IManufacturer";
 import connection from '../database/connection';
 
 class ManufacturerService {
+    async findWithoutFilter() {
+        const all = await connection('manufacturers').where('removed', false).select('*')
+        return all;
+    }
+
     async findOne(id: number) {
         if (id <= 0) return undefined;
 
@@ -22,6 +27,10 @@ class ManufacturerService {
 
         const manufacturers = await query;
         const counter = await queryCount;
+
+        await Promise.all(manufacturers.map(async manufac => {
+            manufac.qtd_produtos = await this.countProducts(manufac.id);
+        }))
 
         return { manufacturers, count: counter[0].count  };
     }
@@ -53,6 +62,15 @@ class ManufacturerService {
         } catch (err) {
             throw err;
         }
+    }
+
+    async countProducts(id: number) {
+        var record = await connection('manufacturers')
+            .join('products', 'products.manufacturer_id', 'manufacturers.id')
+            .where('manufacturers.id', id)
+            .count('products.id', { as : 'count' })
+
+        return record[0].count;;
     }
 }
 

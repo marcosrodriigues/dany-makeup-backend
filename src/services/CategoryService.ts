@@ -3,19 +3,28 @@ import ICategory from '../interface/ICategory';
 import { SERVER_IP } from '../config/info';
 
 class CategoryService {
-    async findAll(title = "", limit = 10, offset = 0) {
-        var query = database('categorys').select('*')
+    async findWithoutFilter() {
+        const all = await database('categorys').where('removed', false).select('*')
+        return all;
+    }
+
+    async findAll(title = "", limit = 5, offset = 0) {
+        var query = database('categorys').select('*').where('removed', false)
         var queryCount = database('categorys').count('id', { as : 'count'});
 
         if (title !== "") {
-            query.where('title', 'like', `%${title}%`);
-            queryCount.where('title', 'like', `%${title}%`);
+            query.andWhere('title', 'like', `%${title}%`);
+            queryCount.andWhere('title', 'like', `%${title}%`);
         }
 
         query.limit(limit).offset(offset);
 
         const categorys = await query;
         const counter = await queryCount;
+
+        await Promise.all(categorys.map(async cat => {
+            cat.qtd_produtos = await this.countProducts(cat.id);
+        }))
 
         return { categorys, count: counter[0].count  };
     }
@@ -48,6 +57,15 @@ class CategoryService {
             ...category,
             image_url: `${SERVER_IP}/uploads/${category.image_url}`
         };
+    }
+
+    async countProducts(id: number) {
+        var record = await database('categorys')
+            .join('category_product', 'category_product.category_id', 'categorys.id')
+            .where('categorys.id', id)
+            .count('category_product.id', { as : 'count' })
+
+        return record[0].count;;
     }
 }
 

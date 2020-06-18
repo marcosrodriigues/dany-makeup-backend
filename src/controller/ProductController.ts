@@ -1,12 +1,30 @@
 import ProductService from "../services/ProductService";
 import { Request, Response } from "express";
+import ManufacturerService from "../services/ManufacturerService";
 
 const service = new ProductService();
+const manufacturerService = new ManufacturerService();
 
 class ProductController {
     async index(request:Request, response: Response) {
-        const products = await service.findAll();
-        return response.json(products);
+        const {
+            page = 1,
+            input = '',
+            limit = 5
+        } = request.query;
+
+        const offset = Number(limit) * (Number(page) - 1);
+
+        try {
+            const { products, count } = await service.findAll(String(input), Number(limit), offset);
+
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            return response.json(products);
+        } catch (err) {
+            console.log("erro index products controller", err)
+            return response.status(400).json({ error: err });
+        }
     }    
 
     async show(request:Request, response: Response) {
@@ -23,7 +41,8 @@ class ProductController {
             value,
             amount,
             categorys,
-            mainImage
+            mainImage,
+            manufacturer_id,
          } = request.body;
          const available = request.body.available === "true";
 
@@ -32,11 +51,24 @@ class ProductController {
          let serializedFiles = [];
          let mainImageNew = "";
 
+         if (!files) {
+            console.log("no files provided");
+            return response.status(400).json({ error: 'No files provided' });
+         }
+
          for (let i = 0; i < files.length; i++) {
              if (files[i].originalname == mainImage) 
                 mainImageNew = service.serializeImage(files[i].filename);
 
             serializedFiles.push(service.serializeImage(files[i].filename))
+         }
+
+         const manufacturer = await manufacturerService.findOne(manufacturer_id) ;
+         
+
+         if (!manufacturer) {
+             console.log("no manufacturer_id provided");
+             return response.status(400).json({ error: 'No manufacturer provided' });
          }
 
          try {
@@ -47,8 +79,9 @@ class ProductController {
                 value,
                 amount,
                 available,
+                manufacturer,
                 mainImage: mainImageNew,
-                images: serializedFiles
+                images: serializedFiles,
              }, categorys.split(','));
 
 
@@ -69,10 +102,10 @@ class ProductController {
             amount,
             categorys,
             mainImage,
-            url_images
+            url_images,
+            manufacturer_id
          } = request.body;
-
-        const available = request.body.available === "true" || request.body.available === "1";
+        const available = request.body.available === "true";
         
         const { files } = request;
 
@@ -90,6 +123,28 @@ class ProductController {
 
         mainImageNew = mainImageNew !== "" ? mainImageNew : mainImage;
 
+        const manufacturer = await manufacturerService.findOne(manufacturer_id) ;
+
+         if (!manufacturer) {
+             console.log("no manufacturer_id provided");
+             return response.status(400).json({ error: 'No manufacturer provided' });
+         }
+
+         console.log(
+            id,
+            name,
+            shortDescription,
+            fullDescription,
+            value,
+            amount,
+            available,
+            mainImageNew,
+            serializedFiles,
+            manufacturer
+         )
+
+         return;
+
         try {
             const product = await service.update({
                 id,
@@ -100,7 +155,8 @@ class ProductController {
                 amount,
                 available,
                 mainImage: mainImageNew,
-                images: serializedFiles 
+                images: serializedFiles,
+                manufacturer
             }, categorys.split(','));
 
             

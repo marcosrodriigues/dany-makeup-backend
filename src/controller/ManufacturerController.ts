@@ -12,16 +12,22 @@ class ManufacturerController {
             page = 1,
             name = '',
             limit = 5,
+            filter = true
          } = request.query;
 
          const offset = Number(limit) * (Number(page) - 1);
 
          try {
-            const { manufacturers, count } = await service.findAll(String(name), Number(limit), offset);
+            if (filter === true) {
+                const { manufacturers, count } = await service.findAll(String(name), Number(limit), offset);
 
-            response.setHeader("x-total-count", Number(count));
-            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
-            return response.json(manufacturers);
+                response.setHeader("x-total-count", Number(count));
+                response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+                return response.json(manufacturers);
+            }
+
+            const manufactures = await service.findWithoutFilter();
+            return response.json(manufactures);
          } catch (err) {
             console.log("erro index manufacturer controller", err)
             return response.status(400).json({ error: err });
