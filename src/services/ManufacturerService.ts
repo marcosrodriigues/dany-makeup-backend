@@ -3,18 +3,27 @@ import connection from '../database/connection';
 
 class ManufacturerService {
     async findWithoutFilter() {
-        const all = await connection('manufacturers').where('removed', false).select('*')
-        return all;
+        try {
+            const all = await connection('manufacturers').where('removed', false).select('*')
+            return all;
+        } catch (err) {
+            throw err;
+        }
     }
 
     async findOne(id: number) {
         if (id <= 0) return undefined;
 
-        const manufacturer = await connection('manufacturers').where('id', id).first();
-        return manufacturer;
+        try {
+            const manufacturer = await connection('manufacturers').where('id', id).first();
+            return manufacturer;
+        } catch (err) {
+            throw err;
+        }
+        
     }
 
-    async findAll(name = "", limit = 10, offset = 0) {
+    async findAll(name = "", limit = 5, offset = 0) {
         var query = connection('manufacturers').select('*')
         var queryCount = connection('manufacturers').count('id', { as : 'count'});
 
@@ -25,14 +34,18 @@ class ManufacturerService {
 
         query.limit(limit).offset(offset);
 
-        const manufacturers = await query;
-        const counter = await queryCount;
-
-        await Promise.all(manufacturers.map(async manufac => {
-            manufac.qtd_produtos = await this.countProducts(manufac.id);
-        }))
-
-        return { manufacturers, count: counter[0].count  };
+        try {
+            const manufacturers = await query;
+            const counter = await queryCount;
+    
+            await Promise.all(manufacturers.map(async manufac => {
+                manufac.qtd_produtos = await this.countProducts(manufac.id);
+            }))
+    
+            return { manufacturers, count: counter[0].count  };
+        } catch (err) {
+            throw err;
+        }
     }
 
     async store(manufacturer: IManufacturer) {
@@ -68,6 +81,7 @@ class ManufacturerService {
         var record = await connection('manufacturers')
             .join('products', 'products.manufacturer_id', 'manufacturers.id')
             .where('manufacturers.id', id)
+            .where('products.removed', false)
             .count('products.id', { as : 'count' })
 
         return record[0].count;;

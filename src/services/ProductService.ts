@@ -15,14 +15,15 @@ class ProductService {
                 .select(['products.*'])
 
             const queryCount = connection('products')
-            .join('manufacturers', 'manufacturers.id', 'products.manufacturer_id')
+                .join('manufacturers', 'manufacturers.id', 'products.manufacturer_id')
                 .where('products.removed', false)
                 .distinct()
                 .count('products.id', { as : 'count' })
 
             if(input !== "") {
-                query.andWhere('title', 'like', `%${input}%`);
-                queryCount.andWhere('title', 'like', `%${input}%`);
+                console.log(input);
+                query.andWhere('products.name', 'like', `%${input}%`);
+                queryCount.andWhere('products.name', 'like', `%${input}%`);
 
                 query.orWhere('shortDescription', 'like', `%${input}%`);
                 queryCount.orWhere('shortDescription', 'like', `%${input}%`);
@@ -31,9 +32,12 @@ class ProductService {
                 queryCount.orWhere('fullDescription', 'like', `%${input}%`);
             }
 
+            query.limit(limit).offset(offset);
+
             const filteredProducts = await query;
             const counter = await queryCount;
     
+            console.log(filteredProducts);
             const products = await Promise.all(filteredProducts
                 .map(async product => {
                     const categorys = await connection('categorys')
@@ -130,8 +134,6 @@ class ProductService {
 
     async update(product: IProduct, categorys: []) {
         if (!product.id) return undefined;
-
-        console.log(product, categorys);
 
         try {
             const trx = await connection.transaction();

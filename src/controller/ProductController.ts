@@ -1,22 +1,26 @@
 import ProductService from "../services/ProductService";
 import { Request, Response } from "express";
 import ManufacturerService from "../services/ManufacturerService";
+import ProductImagesService from "../services/ProductImagesService";
+import FileService from "../services/FileService";
 
 const service = new ProductService();
 const manufacturerService = new ManufacturerService();
+const piService = new ProductImagesService();
+const fileService = new FileService();
 
 class ProductController {
     async index(request:Request, response: Response) {
         const {
             page = 1,
-            input = '',
+            name = '',
             limit = 5
         } = request.query;
 
         const offset = Number(limit) * (Number(page) - 1);
 
         try {
-            const { products, count } = await service.findAll(String(input), Number(limit), offset);
+            const { products, count } = await service.findAll(String(name), Number(limit), offset);
 
             response.setHeader("x-total-count", Number(count));
             response.setHeader("Access-Control-Expose-Headers", "x-total-count");
@@ -105,12 +109,22 @@ class ProductController {
             url_images,
             manufacturer_id
          } = request.body;
-        const available = request.body.available === "true";
+        const available = request.body.available === "true" || request.body.available === "1";
         
         const { files } = request;
 
         let serializedFiles = url_images;
         let mainImageNew = "";
+
+         const database_files = await piService.findByProduct(id);
+         database_files.map(db => {
+             let contains = false;
+             url_images.map((url:string) => {
+                if (url === db.url) contains = true;
+             })
+             if (!contains)
+                fileService.remove(db.url)
+         })
 
          if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
@@ -121,7 +135,7 @@ class ProductController {
             }
          }
 
-        mainImageNew = mainImageNew !== "" ? mainImageNew : mainImage;
+         mainImageNew = mainImageNew !== "" ? mainImageNew : mainImage;
 
         const manufacturer = await manufacturerService.findOne(manufacturer_id) ;
 
@@ -129,21 +143,6 @@ class ProductController {
              console.log("no manufacturer_id provided");
              return response.status(400).json({ error: 'No manufacturer provided' });
          }
-
-         console.log(
-            id,
-            name,
-            shortDescription,
-            fullDescription,
-            value,
-            amount,
-            available,
-            mainImageNew,
-            serializedFiles,
-            manufacturer
-         )
-
-         return;
 
         try {
             const product = await service.update({
@@ -169,6 +168,12 @@ class ProductController {
 
     async delete(request: Request, response: Response) {
         const { id } = request.params;
+        if (!id) return response.status(400).json({});
+
+        const database_files = await piService.findByProduct(Number(id));
+        database_files.map(db => {
+            fileService.remove(db.url)
+        })
 
         const product = await service.findOne(Number(id));
 
