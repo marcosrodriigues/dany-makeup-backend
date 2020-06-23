@@ -91,6 +91,47 @@ class CategoryService {
 
         return record[0].count;;
     }
+
+    async findWithProduct() {
+        var query = database('categorys')
+            .join('category_product', 'category_product.category_id', 'categorys.id')
+            .join('products', 'products.id', 'category_product.product_id')
+            .where('categorys.removed', false)
+            .where('products.removed', false)
+            .count('products.id', { as: 'counter'})
+            .having('counter', ">", 0)
+            .groupBy('categorys.id')
+            .distinct()
+            .select(['categorys.*'])
+
+        try {
+            const categorys = await query;
+
+            return categorys;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async findProducts(category_id: number) {
+        var query = database('category_product')
+            .join('products', 'products.id', 'category_product.product_id')
+            .where('products.removed', false)
+            .where('category_product.category_id', category_id)
+            .select("products.*");
+
+        try {
+            const products = await query;
+
+            console.log(products);
+
+            return products;
+        } catch (err) {
+            console.log("Error service category - findProducts")
+            throw err;
+        }
+    }
 }
+
 
 export default CategoryService;

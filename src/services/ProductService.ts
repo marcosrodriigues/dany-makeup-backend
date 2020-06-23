@@ -193,6 +193,15 @@ class ProductService {
     }
 
 
+    async findInIdsWithoutFilter(ids: number[]) {
+        try {
+            const all = await connection('products').whereIn('id', [ids]).select('*');
+            return all;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     serializeImage(image: string) {
         return `${SERVER_IP}/uploads/${image}`;
     }

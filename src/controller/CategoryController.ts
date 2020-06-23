@@ -17,17 +17,16 @@ class CategoryController {
         const offset = Number(limit) * (Number(page) - 1);
 
         try {
-            if (filter === true) {
-                const { categorys, count } = await service.findAll(String(title), Number(limit), offset);
-
-                response.setHeader("x-total-count", Number(count));
-                response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            if (filter !== true) {
+                const categorys = await service.findWithoutFilter();
                 return response.json(categorys);
             }
 
-            const categorys = await service.findWithoutFilter();
+            const { categorys, count } = await service.findAll(String(title), Number(limit), offset);
+
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
             return response.json(categorys);
-            
          } catch (err) {
             console.log("erro index category controller", err)
             return response.status(400).json({ error: err });
@@ -129,7 +128,22 @@ class CategoryController {
         }
     }
 
-    
+    async categoryProduct(request: Request, response: Response) {
+        try {
+            const categorys = await service.findWithProduct();
+            const categorys_products = await Promise.all(
+                categorys.map(async cat => {
+                    cat.products = await service.findProducts(cat.id)
+                    return cat;
+                })
+            );
+            
+            return response.json(categorys_products);
+        } catch (err) {
+            console.log("Error category controller - categoryProduct");
+            return response.status(400).json({ error: err })
+        }
+    }
 }
 
 export default CategoryController;
