@@ -6,9 +6,58 @@ import { convertToDatabaseDate } from '../util/util';
 class PromotionService {
     async findWithoutFilter() {
         try {
-            const all = await database('promotions').where('removed', false).select('*')
+            const all = await database('promotions')
+                .where('removed', false)
+                .select('*')
             return all;
         } catch (err) {
+            throw err;
+        }
+    }
+
+    async findAll(input = "", limit = 5, offset = 0) {
+        try {
+            const query = database('promotions')
+                .join('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
+                .join('products', 'products.id', 'promotion_product.product_id')
+                .where('promotions.removed', false)
+                .distinct()
+                .select('promotions.*')
+
+            const queryCount = database('promotions')
+                .join('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
+                .join('products', 'products.id', 'promotion_product.product_id')
+                .where('promotions.removed', false)
+                .distinct()
+                .count('promotions.id', { as: 'count' })
+
+            if (input !== "") {
+                query.andWhere('promotions.name', 'like', `%${input}%`)
+                queryCount.andWhere('promotions.name', 'like', `%${input}%`)
+
+                query.orWhere('products.name', 'like', `%${input}%`)
+                queryCount.orWhere('products.name', 'like', `%${input}%`)
+            }
+
+            query.limit(limit).offset(offset);
+            const filtered = await query;
+            const counter = await queryCount;
+            
+            const promotions = await Promise.all(filtered
+                .map(async promotion => {
+                    const products = await database('products')
+                        .join('promotion_product', 'promotion_product.product_id', 'products.id')
+                        .where('promotion_product.promotion_id', promotion.id)
+                        .distinct()
+                        .select('products.*');
+
+                    return {promotion, products}
+                }));
+
+            return { promotions, count: counter[0].count }
+
+        } catch (err) {
+            console.log(err);
             throw err;
         }
     }
@@ -44,10 +93,9 @@ class PromotionService {
             await trx('promotion_images').insert(images);
 
             const promotion_products = promotion.products
-                .map(prod => prod.id)
-                .map(prodId => {
+                .map(prod => {
                     return {
-                        product_id: prodId,
+                        product_id: prod.id,
                         promotion_id: id
                     }
                 });
@@ -58,6 +106,15 @@ class PromotionService {
 
             const inserted = await connection('promotions').where('id','=',id).select('*').first();
             return inserted;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async delete(id: number) {
+        try {
+            await connection('promotions').where('id', '=', id).update({ removed: true });
+            return;
         } catch (err) {
             throw err;
         }

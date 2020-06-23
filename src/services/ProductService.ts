@@ -21,7 +21,6 @@ class ProductService {
                 .count('products.id', { as : 'count' })
 
             if(input !== "") {
-                console.log(input);
                 query.andWhere('products.name', 'like', `%${input}%`);
                 queryCount.andWhere('products.name', 'like', `%${input}%`);
 
@@ -37,7 +36,6 @@ class ProductService {
             const filteredProducts = await query;
             const counter = await queryCount;
     
-            console.log(filteredProducts);
             const products = await Promise.all(filteredProducts
                 .map(async product => {
                     const categorys = await connection('categorys')
@@ -195,7 +193,7 @@ class ProductService {
 
     async findInIdsWithoutFilter(ids: number[]) {
         try {
-            const all = await connection('products').whereIn('id', [ids]).select('*');
+            const all = await connection('products').whereIn('id', ids).select('*');
             return all;
         } catch (err) {
             throw err;

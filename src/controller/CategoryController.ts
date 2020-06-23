@@ -132,7 +132,7 @@ class CategoryController {
         try {
             const categorys = await service.findWithProduct();
             const categorys_products = await Promise.all(
-                categorys.map(async cat => {
+                categorys.map(async (cat: any) => {
                     cat.products = await service.findProducts(cat.id)
                     return cat;
                 })

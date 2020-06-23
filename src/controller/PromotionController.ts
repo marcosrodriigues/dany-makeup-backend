@@ -2,18 +2,41 @@ import { Request, Response } from "express";
 import FileService from "../services/FileService";
 import ProductService from "../services/ProductService";
 import PromotionService from "../services/PromotionService";
+import PromotionImagesService from "../services/PromotionImagesService";
+import ProductImagesService from "../services/ProductImagesService";
 
 const fileService = new FileService();
 const productService = new ProductService();
 const service = new PromotionService();
+const promotionImagesService = new PromotionImagesService();
+const productImagesService = new ProductImagesService();
 
 class PromotionController {
     async index(request: Request, response: Response) {
-        return response.json({ page: 'index' })   
+        const {
+            name = "",
+            page = 1,
+            limit = 5
+        } = request.query;
+
+        const offset = Number(limit) * (Number(page) - 1);
+
+        try {
+            const { promotions, count } = await service.findAll(String(name), Number(limit), offset);
+
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            return response.json(promotions);
+        } catch (err) {
+            console.log("ERROR PROMOTION CONTROLLER - INDEX\n");
+            return response.status(400).json({ error: err })   
+        }
     }
 
     async show(request: Request, response: Response) {
-        return response.json({ page: 'show' })   
+        const { id } = request.params;
+        const promotion = await service.findOne(Number(id));
+        return response.json(promotion);   
     }
 
     async store(request: Request, response: Response) {
@@ -47,7 +70,8 @@ class PromotionController {
            serializedFiles.push(fileService.serializeImageUrl(files[i].filename))
         }
 
-        const db_prod = await productService.findInIdsWithoutFilter(products);
+
+        const db_prod = await productService.findInIdsWithoutFilter(products.split(','));
 
         try {
             await service.store({
@@ -75,7 +99,24 @@ class PromotionController {
     }
 
     async delete(request: Request, response: Response) {
-        return response.json({ page: 'delete' })   
+        const { id } = request.params;
+        if (!id) return response.status(400).json({ error: 'No promotion provided! '});
+
+        const database_files = await promotionImagesService.findByPromotion(Number(id));
+        database_files.map(async db => {
+            const fileFromProduct = await productImagesService.existsByUrl(db.url)
+            if (fileFromProduct === false)
+                fileService.remove(db.url)
+        })
+
+        try {
+            await service.delete(Number(id));
+            return response.json({ message: 'removed'});
+        } catch (err) {
+            console.log('ERROR PROMOTION CONTROLLER DELETE', err);
+            return response.status(400).json({ error: err});
+        }
+
     }
 }
 
