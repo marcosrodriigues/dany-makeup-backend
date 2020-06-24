@@ -123,8 +123,6 @@ class CategoryService {
         try {
             const products = await query;
 
-            console.log(products);
-
             return products;
         } catch (err) {
             console.log("Error service category - findProducts")

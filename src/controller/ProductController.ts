@@ -144,6 +144,7 @@ class ProductController {
              return response.status(400).json({ error: 'No manufacturer provided' });
          }
 
+
         try {
             const product = await service.update({
                 id,
@@ -158,7 +159,6 @@ class ProductController {
                 manufacturer
             }, categorys.split(','));
 
-            
             return response.json(product);
         } catch (err) {
             console.log(err);
@@ -172,7 +172,9 @@ class ProductController {
 
         const database_files = await piService.findByProduct(Number(id));
         database_files.map(db => {
-            fileService.remove(db.url)
+            try {
+                fileService.remove(db.url)
+            } catch (err) { }
         })
 
         const product = await service.findOne(Number(id));

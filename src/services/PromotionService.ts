@@ -18,18 +18,18 @@ class PromotionService {
     async findAll(input = "", limit = 5, offset = 0) {
         try {
             const query = database('promotions')
-                .join('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
-                .join('products', 'products.id', 'promotion_product.product_id')
+                .leftJoin('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
+                .leftJoin('products', 'products.id', 'promotion_product.product_id')
                 .where('promotions.removed', false)
                 .distinct()
                 .select('promotions.*')
 
             const queryCount = database('promotions')
-                .join('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
-                .join('products', 'products.id', 'promotion_product.product_id')
+                .leftJoin('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
+                .leftJoin('products', 'products.id', 'promotion_product.product_id')
                 .where('promotions.removed', false)
                 .distinct()
-                .count('promotions.id', { as: 'count' })
+                .countDistinct('promotions.id', { as: 'count' })
 
             if (input !== "") {
                 query.andWhere('promotions.name', 'like', `%${input}%`)
@@ -63,8 +63,25 @@ class PromotionService {
     }
 
     async findOne(id: number) {
-        const one = await database('promotions').where('id', '=', id).select('*').first();
-        return one;
+        try {
+            const promotion = await connection('promotions').where('id', id).select('*').first();
+
+            const products = await connection('products')
+                            .join('promotion_product', 'promotion_product.product_id', 'products.id')
+                            .where('promotion_product.promotion_id', promotion.id)
+                            .distinct()
+                            .select('products.*');
+
+            const images = await connection('promotion_images')
+                            .join('promotions', 'promotion_images.promotion_id', 'promotions.id')
+                            .where('promotion_images.promotion_id', promotion.id)
+                            .distinct()
+                            .select('promotion_images.*');
+
+            return {promotion, products, images};
+        } catch (err) {
+            throw err;
+        }
     }
 
     async store(promotion: IPromotion) {
@@ -107,6 +124,54 @@ class PromotionService {
             const inserted = await connection('promotions').where('id','=',id).select('*').first();
             return inserted;
         } catch (err) {
+            throw err;
+        }
+    }
+
+    async update(promotion: IPromotion) {
+        if (!promotion.id) throw "No promotion provided";
+
+        try {
+            const trx = await connection.transaction();
+
+            await trx('promotion_images').where('promotion_id', promotion.id).delete();
+            await trx('promotion_product').where('promotion_id', promotion.id).delete();
+
+            await trx('promotions').where('id', promotion.id).update({
+                name: promotion.name,
+                start: convertToDatabaseDate(promotion.start),
+                end: convertToDatabaseDate(promotion.end),
+                originalValue: promotion.originalValue,
+                discountType: promotion.discountType,
+                discount: promotion.discount,
+                promotionValue: promotion.promotionValue,
+                mainImage: promotion.mainImage,
+            })
+
+            const images = promotion.images
+                .map(img => {
+                    return {
+                        promotion_id: promotion.id,
+                        url: img
+                    }
+                })
+
+            const promotion_products = promotion.products
+                .map(prod => {
+                    return {
+                        product_id: prod.id,
+                        promotion_id: promotion.id
+                    }
+                });
+
+            await trx('promotion_images').insert(images);
+            await trx('promotion_product').insert(promotion_products);
+            await trx.commit();
+
+            const updated = this.findOne(promotion.id);
+            return updated;
+        } catch (err) {
+            console.log(err)
             throw err;
         }
     }

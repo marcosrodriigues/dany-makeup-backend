@@ -64,6 +64,8 @@ class ProductService {
     }
 
     async findOne(id: number) {
+        if (!id) throw "Product not provided"
+
         try {
             const product = await connection('products').where('id', id).select('*').first();
 
@@ -131,7 +133,7 @@ class ProductService {
     }
 
     async update(product: IProduct, categorys: []) {
-        if (!product.id) return undefined;
+        if (!product.id) throw "No product provided";
 
         try {
             const trx = await connection.transaction();
@@ -139,7 +141,7 @@ class ProductService {
             await trx('product_images').where({product_id: product.id}).delete();
             await trx('category_product').where({product_id: product.id}).delete();
 
-            const id = await trx('products').where('id', product.id).update({
+            await trx('products').where('id', product.id).update({
                 name: product.name,
                 shortDescription: product.shortDescription,
                 fullDescription: product.fullDescription,
@@ -172,7 +174,7 @@ class ProductService {
 
             trx.commit();
 
-            const updated = await connection('products').where('id','=',id).select('*').first();
+            const updated = this.findOne(product.id);
             return updated;
         } catch (err) {
             console.log(err);

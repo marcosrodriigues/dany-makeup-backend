@@ -70,7 +70,6 @@ class PromotionController {
            serializedFiles.push(fileService.serializeImageUrl(files[i].filename))
         }
 
-
         const db_prod = await productService.findInIdsWithoutFilter(products.split(','));
 
         try {
@@ -95,7 +94,68 @@ class PromotionController {
     }
 
     async update(request: Request, response: Response) {
-        return response.json({ page: 'update' })   
+        const {
+            id,
+            name,
+            start,
+            end,
+            originalValue,
+            discountType,
+            discount,
+            promotionValue,
+            mainImage,
+            products,
+            images
+        } = request.body;
+
+        const { files } = request;
+
+        if (!files && mainImage === "" && images.length === 0) {
+            console.log("no files provided");
+            return response.status(400).json({ error: 'No files provided' });
+        }
+
+        
+        let serializedFiles = images;
+        let mainImageNew = mainImage;
+
+        if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].originalname == mainImageNew) 
+                    mainImageNew = fileService.serializeImageUrl(files[i].filename);
+
+                serializedFiles.push(fileService.serializeImageUrl(files[i].filename))
+            }
+        }
+        try {
+            const database_files = await promotionImagesService.findByPromotion(Number(id));
+            database_files.map(async db => {
+                const fileFromProduct = await productImagesService.existsByUrl(db.url)
+                if (fileFromProduct === false)
+                    fileService.remove(db.url)
+            })
+
+            const db_prod = await productService.findInIdsWithoutFilter(products.split(','));
+
+            await service.update({
+                id,
+                name,
+                start,
+                end,
+                originalValue,
+                discountType,
+                discount,
+                promotionValue,
+                mainImage: mainImageNew,
+                products: db_prod,
+                images: serializedFiles
+            });
+
+            return response.json({message: 'success'});
+        } catch (err) {
+            console.log('Error PROMOTION CONTROLLER UPDATE', err)
+            return response.status(400).json({ error: err })   
+        }
     }
 
     async delete(request: Request, response: Response) {
@@ -106,7 +166,7 @@ class PromotionController {
         database_files.map(async db => {
             const fileFromProduct = await productImagesService.existsByUrl(db.url)
             if (fileFromProduct === false)
-                fileService.remove(db.url)
+                 fileService.remove(db.url)
         })
 
         try {

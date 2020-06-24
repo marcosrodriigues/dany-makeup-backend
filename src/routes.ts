@@ -51,7 +51,7 @@ routes.delete('/products/:id', productController.delete)
 routes.get('/promotions', promotionController.index)
 routes.get('/promotions/:id', promotionController.show)
 routes.post('/promotions', uploads.array('files[]'), promotionController.store)
-routes.put('/promotions', promotionController.update)
+routes.put('/promotions', uploads.array('files[]'), promotionController.update)
 routes.delete('/promotions/:id', promotionController.delete)
 
 routes.get('/product_images/:id', productImagesController.show)
