@@ -21,14 +21,16 @@ class ProductService {
                 .count('products.id', { as : 'count' })
 
             if(input !== "") {
-                query.andWhere('products.name', 'like', `%${input}%`);
-                queryCount.andWhere('products.name', 'like', `%${input}%`);
-
-                query.orWhere('shortDescription', 'like', `%${input}%`);
-                queryCount.orWhere('shortDescription', 'like', `%${input}%`);
-
-                query.orWhere('fullDescription', 'like', `%${input}%`);
-                queryCount.orWhere('fullDescription', 'like', `%${input}%`);
+                query.andWhere(function() {
+                    this.where('products.name', 'like', `%${input}%`)
+                    .orWhere('shortDescription', 'like', `%${input}%`)
+                    .orWhere('fullDescription', 'like', `%${input}%`);
+                })
+                queryCount.andWhere(function() {
+                    this.where('products.name', 'like', `%${input}%`)
+                    .orWhere('shortDescription', 'like', `%${input}%`)
+                    .orWhere('fullDescription', 'like', `%${input}%`);
+                })
             }
 
             query.limit(limit).offset(offset);

@@ -32,11 +32,14 @@ class PromotionService {
                 .countDistinct('promotions.id', { as: 'count' })
 
             if (input !== "") {
-                query.andWhere('promotions.name', 'like', `%${input}%`)
-                queryCount.andWhere('promotions.name', 'like', `%${input}%`)
-
-                query.orWhere('products.name', 'like', `%${input}%`)
-                queryCount.orWhere('products.name', 'like', `%${input}%`)
+                query.andWhere(function () {
+                    this.where('promotions.name', 'like', `%${input}%`)
+                    .orWhere('products.name', 'like', `%${input}%`)
+                });
+                queryCount.andWhere(function () {
+                    this.where('promotions.name', 'like', `%${input}%`)
+                    .orWhere('products.name', 'like', `%${input}%`)
+                });
             }
 
             query.limit(limit).offset(offset);

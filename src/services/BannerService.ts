@@ -9,11 +9,14 @@ class BannerService {
             var queryCount = connection('banners').where({removed: false}).count('id', { as : 'count'});
 
             if (search !== "") {
-                query.andWhere('name', 'like', `%${search}%`)
-                queryCount.andWhere('name', 'like', `%${search}%`)
-
-                query.orWhere('description', 'like', `%${search}%`)
-                queryCount.orWhere('description', 'like', `%${search}%`)
+                query.andWhere(function() {
+                    this.where('name', 'like', `%${search}%`)
+                    .orWhere('description', 'like', `%${search}%`)
+                })
+                queryCount.andWhere(function() {
+                    this.where('name', 'like', `%${search}%`)
+                    .orWhere('description', 'like', `%${search}%`)
+                })
             }
 
             query.limit(limit).offset(offset);
