@@ -27,6 +27,8 @@ routes.get('/users', userController.index);
 
 routes.get('/users/:id', userController.show);
 routes.post('/users', userController.store);
+routes.put('/users', userController.update);
+routes.delete('/users', userController.delete);
 routes.post('/auth/login', userController.login);
 routes.post('/auth/facebook/:fb_id', userController.facebookId)
 
@@ -67,7 +69,5 @@ routes.get('/product_images/:id', productImagesController.show)
 
 routes.use(auth);
 routes.get('/auth/me', userController.me);
-routes.put('/users', userController.update);
-routes.delete('/users', userController.delete);
 
 export default routes;

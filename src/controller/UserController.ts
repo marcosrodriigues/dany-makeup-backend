@@ -1,21 +1,49 @@
 import { Request, Response } from 'express';
 import Crypto from '../util/crypto';
 import UserService from '../services/UserService';
-import generateToken from '../security/utilJwt';
 import UtilJwt from '../security/utilJwt';
+import FileService from '../services/FileService';
 
 const service = new UserService();
 const crypt = new Crypto();
 const utilJwt = new UtilJwt();
+const fileService = new FileService();
 
 class UserControlloer {
 
     async index(request: Request, response: Response) { 
-        const users = await service.findAll();
-        return response.json(users);
+        const {
+            search = "",
+            page = 1,
+            limit = 5
+        } = request.query;
+
+        const offset = Number(limit) * (Number(page) - 1);
+
+        try {
+            const { users, count } = await service.findAll(String(search), Number(limit), offset);
+
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            return response.json(users);
+        } catch (err) {
+            console.log("ERROR USER CONTROLLER - INDEX\n");
+            return response.status(400).json({ error: err })   
+        }
+        
     }
     async show(request: Request, response: Response) {
-        response.json({ page: 'show' })
+        const { id } = request.params;
+
+        if (!id) return response.status(400).json({ message: 'No user provided' })
+
+        try {
+            const { user, address } = await service.findOne(Number(id));
+            return response.json({ user, address });
+        } catch (err) {
+            console.log("erro show user controller", err)
+            return response.status(400).json({ error: err });
+         }
     }
     async facebookId(request: Request, response: Response) {
         const {
@@ -86,23 +114,33 @@ class UserControlloer {
         }
     }
     async delete(request: Request, response: Response) { }
+    
     async update(request: Request, response: Response) { 
+        const {
+            user,
+            address
+        } = request.body;
+
+        const { file } = request;
+
+        let { id, name, email, password, whatsapp, fb_id } = user;
+        const image = file ? fileService.serializeImageUrl(file.filename) : user.image;
+        
         try {
-            const me = await service.findMe(request);
-            let { id, name, email, whatsapp, password, image, fb_id } = request.body;
+            const current_user = await service.findOne(Number(id));
 
-            if (!me) return response.status(400).json({ error: 'Operation unathorization. Not possible to get user online'});
-            if (me.id != id) return response.status(400).json({ error: 'Operation unathorization. Seems you\' not the own of this account'});
+            if (password !== current_user.user.password) password = await crypt.encrypt(password);
+            if (email !== current_user.user.email) {
+                const userByEmail = await service.findByEmail(email)
 
-            if (password !== me.password) {
-                password = await crypt.encrypt(password);
+                if (userByEmail) throw "Email já utilizado!"
             }
 
-            const user = await service.update({
+            const user_updated = await service.update({
                 id, name, email, whatsapp, password, image, fb_id
-            });
+            }, address);
 
-            return response.json(user);
+            return response.json(user_updated);
         } catch (error) {
             return response.status(400).json({ error: 'Unable to update the user: ' + error });
         }

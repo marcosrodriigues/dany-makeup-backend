@@ -1,47 +1,84 @@
-import database from '../database/connection';
 import IUser from '../interface/IUser';
 import Crypto from '../util/crypto';
 import { Request } from 'express';
+import AddressService from './AddressService';
+import connection from '../database/connection';
+import IAddress from '../interface/IAddress';
 
 const crypt = new Crypto();
 
+const addressService = new AddressService();
+
 class UserService {
-    async findAll() {
-        const users = await database('users').select('*');
-        return users;
+    async findAll(search = "", limit = 5, offset = 0) {
+        var query = connection('users').where('removed', false).select('*');
+        var queryCount = connection('users').where('removed', false).count('id', { as : 'count'});
+
+        if (search !== "") {
+            query.andWhere(function() {
+                this.orWhere('name', 'like', `%${search}%`)
+                .orWhere('email', 'like', `%${search}%`)
+                .orWhere('whatsapp', 'like', `%${search}%`)
+            })
+            queryCount.andWhere(function() {
+                this.orWhere('name', 'like', `%${search}%`)
+                .orWhere('email', 'like', `%${search}%`)
+                .orWhere('whatsapp', 'like', `%${search}%`)
+            })
+        }
+
+        query.limit(limit).offset(offset);
+
+        const users = await query;
+        const counter = await queryCount;
+
+        return {users , count: counter[0].count};
     }
 
     async findOne(id: number) {
-        const user = await database('users').where('id', '=', id).select('*').first();
-        return user;
+        try {
+            const user = await connection('users').where({ id, removed: false }).first();
+            const address = await addressService.findByUser(user.id);
+
+            return { user, address };
+        } catch (err) {
+            throw err;
+        }
     }
 
     async findByEmail(email: string) {
-        const user = await database('users').where('email', '=', email).select('*').first();
+        const user = await connection('users').where('email', '=', email).select('*').first();
         return user;
     }
 
     async save(user: IUser) {
-        const saved = await database('users').insert(user);
+        const saved = await connection('users').insert(user);
         return saved;
     }
 
-    async update(user :IUser) {
+    async update(user :IUser, address: IAddress) {
+        if (!user.id) throw "No user provided on update";
         try {
-            if (user.id) {
-                const updated = await database('users').update(user).where("id", '=', user.id);
-                return updated;
+            const trx = await connection.transaction();
+
+            await trx('users').update(user).where('id', user.id);
+            if (address.id) {
+                await trx('address').update({...address, user_id: user.id }).where('user_id', user.id);
+            } else {
+                await trx('address').insert({...address, user_id: user.id });
             }
-            console.log("ID not found on update user");
-            return undefined;
+
+            trx.commit();
+
+            const db_user = await this.findOne(user.id)
+            return db_user;
         } catch (err) {
-            console.log(err);
-            return undefined;
+            throw err;
         }
     }
 
     async verifyMail(email: string) {
-        const user = await database('users').where('email', '=', email).select('*').first();
+        const user = await connection('users').where('email', '=', email).select('*').first();
 
         if (user)
             return false;
@@ -50,7 +87,7 @@ class UserService {
     }
 
     async findByFacebookId(fb_id: string) {
-        const user = await database('users').where('fb_id', '=', fb_id).select('*').first();
+        const user = await connection('users').where('fb_id', '=', fb_id).select('*').first();
         return user ? user : undefined;
     }
 
