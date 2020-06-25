@@ -151,6 +151,7 @@ class ProductService {
                 available: Boolean(product.available),
                 mainImage: product.mainImage,
                 value: Number(product.value).toFixed(2),
+                manufacturer_id: product.manufacturer.id
             })
 
             const images = product.images
