@@ -91,7 +91,7 @@ class ManufacturerController {
                 await fileService.remove(manufacture.image_url)
             } catch (err) {
                 console.log("erro update (file) manufacturer controller", err)
-                return response.status(400).json({ error: err });
+                //return response.status(400).json({ error: err });
             }
 
             manufacturer = {
@@ -120,7 +120,7 @@ class ManufacturerController {
             await fileService.remove(manufacture.image_url)
         } catch (err) {
             console.log("erro delete (file) manufacturer controller", err)
-            return response.status(400).json({ error: err });
+            //return response.status(400).json({ error: err });
         }
 
         try {

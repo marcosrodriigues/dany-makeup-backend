@@ -113,18 +113,20 @@ class ProductController {
         
         const { files } = request;
 
-        let serializedFiles = url_images;
+        let serializedFiles = url_images || [];
         let mainImageNew = "";
 
-         const database_files = await piService.findByProduct(id);
-         database_files.map(db => {
-             let contains = false;
-             url_images.map((url:string) => {
-                if (url === db.url) contains = true;
-             })
-             if (!contains)
-                fileService.remove(db.url)
-         })
+         if (url_images) {
+            const database_files = await piService.findByProduct(id);
+            database_files.map(db => {
+                let contains = false;
+                url_images.map((url:string) => {
+                   if (url === db.url) contains = true;
+                })
+                if (!contains)
+                   fileService.remove(db.url)
+            })
+         }
 
          if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {

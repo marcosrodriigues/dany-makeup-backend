@@ -10,11 +10,11 @@ export default {
             var dest = path.resolve(__dirname, '..', '..', 'uploads', folder);
 
             try {
-                fs.mkdirSync(dest);
+                var stat = fs.statSync(dest);
             } catch (err) {
-                console.log('ERR CREATE FOLDER ', dest);
-                console.log('ERR DETAILS: ', err)
+                fs.mkdirSync(dest);
             }
+            
             callback(null, dest);
         },
         filename(request, file, callback) {

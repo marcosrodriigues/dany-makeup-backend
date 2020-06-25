@@ -7,8 +7,9 @@ class FileService {
         if (!url.startsWith(SERVER_IP)) throw "Image not available";
         
         const filename = this.getFilename(url);
-        
-        const pathfile = path.resolve(__dirname, '..', '..', 'uploads', filename);
+        const folder = this.getFolder(url);
+
+        const pathfile = path.resolve(__dirname, '..', '..', 'uploads', folder, filename);
 
         try {
             fs.unlinkSync(pathfile);
@@ -19,8 +20,16 @@ class FileService {
     }
 
     getFilename(url: string) {
-        if (url.startsWith("http")) {
+        if (url.startsWith(SERVER_IP)) {
             return String(url).substring(String(url).lastIndexOf('/') + 1, url.length) 
+        }
+        return url;
+    }
+
+    getFolder(url: string) {
+        if (url.startsWith(SERVER_IP)) {
+            const splited = url.split('/uploads/')[1];
+            return splited.substring(0, splited.indexOf('/'));
         }
         return url;
     }
