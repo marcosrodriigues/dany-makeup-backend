@@ -124,7 +124,7 @@ class UserControlloer {
         const { file } = request;
 
         let { id, name, email, password, whatsapp, fb_id } = user;
-        const image = file ? fileService.serializeImageUrl(file.filename) : user.image;
+        const image = file ? fileService.serializeImageUrl(file.filename, 'users') : user.image;
         
         try {
             const current_user = await service.findOne(Number(id));

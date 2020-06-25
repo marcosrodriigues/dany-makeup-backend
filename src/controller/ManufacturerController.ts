@@ -59,7 +59,7 @@ class ManufacturerController {
 
         if (!file) return response.status(400).json({ error: "No image provided!" });
 
-        const image_url = fileService.serializeImageUrl(file.filename);
+        const image_url = fileService.serializeImageUrl(file.filename, 'manufacturers');
         
         try {
             const manufactured = await service.store({
@@ -96,7 +96,7 @@ class ManufacturerController {
 
             manufacturer = {
                 ...manufacturer,
-                image_url: fileService.serializeImageUrl(file.filename)
+                image_url: fileService.serializeImageUrl(file.filename, 'manufacturers')
             }
         }
 

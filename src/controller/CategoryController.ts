@@ -55,7 +55,7 @@ class CategoryController {
 
         if (!file) return response.status(400).json({ error: "No image provided!" });
 
-        const image_url = fileService.serializeImageUrl(file.filename);
+        const image_url = fileService.serializeImageUrl(file.filename, 'categorys');
 
         try {
             const category = await service.store({
@@ -88,12 +88,12 @@ class CategoryController {
                 await fileService.remove(database_category.image_url)
             } catch (err) {
                 console.log("erro update (file) category controller", err)
-                return response.status(400).json({ error: err });
+                //return response.status(400).json({ error: err });
             }
 
             category = {
                 ...category,
-                image_url: fileService.serializeImageUrl(file.filename)
+                image_url: fileService.serializeImageUrl(file.filename, 'categorys')
             }
         }
 
@@ -109,14 +109,14 @@ class CategoryController {
     async delete(request: Request, response: Response) {
         const { id } = request.params;
 
-        if (!id) return response.status(400).json({ error: 'No manufacturer provider!' });
+        if (!id) return response.status(400).json({ error: 'No category provider!' });
 
         try {
             const category = await service.findOne(Number(id));
             await fileService.remove(category.image_url)
         } catch (err) {
             console.log("erro delete (file) category controller", err)
-            return response.status(400).json({ error: err });
+            //return response.status(400).json({ error: err });
         }
 
         try {

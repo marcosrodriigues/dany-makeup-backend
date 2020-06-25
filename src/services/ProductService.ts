@@ -204,10 +204,6 @@ class ProductService {
             throw err;
         }
     }
-
-    serializeImage(image: string) {
-        return `${SERVER_IP}/uploads/${image}`;
-    }
 }
 
 export default ProductService

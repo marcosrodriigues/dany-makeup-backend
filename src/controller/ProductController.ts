@@ -62,9 +62,9 @@ class ProductController {
 
          for (let i = 0; i < files.length; i++) {
              if (files[i].originalname == mainImage) 
-                mainImageNew = service.serializeImage(files[i].filename);
+                mainImageNew = fileService.serializeImageUrl(files[i].filename, 'products');
 
-            serializedFiles.push(service.serializeImage(files[i].filename))
+            serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'products'));
          }
 
          const manufacturer = await manufacturerService.findOne(manufacturer_id) ;
@@ -129,9 +129,9 @@ class ProductController {
          if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 if (files[i].originalname == mainImage) 
-                   mainImageNew = service.serializeImage(files[i].filename);
+                   mainImageNew = fileService.serializeImageUrl(files[i].filename, 'products');
    
-                serializedFiles.push(service.serializeImage(files[i].filename))
+                serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'products'))
             }
          }
 

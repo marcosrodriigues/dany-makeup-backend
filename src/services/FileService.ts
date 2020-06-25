@@ -25,8 +25,8 @@ class FileService {
         return url;
     }
 
-    serializeImageUrl(filename: string) {
-        return `${SERVER_IP}/uploads/${filename}`
+    serializeImageUrl(filename: string, folder: string) {
+        return `${SERVER_IP}/uploads/${folder}/${filename}`
     }
 }
 

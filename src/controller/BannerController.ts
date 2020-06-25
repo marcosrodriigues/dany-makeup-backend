@@ -56,7 +56,7 @@ class BannerController {
             return response.status(400).json({error: 'No file provided!'});
         }
 
-        const image_url = fileService.serializeImageUrl(file.filename);
+        const image_url = fileService.serializeImageUrl(file.filename, 'banners');
 
         try {
             await service.store({
@@ -104,7 +104,7 @@ class BannerController {
             
         let new_image_url = image_url;
         if (file) {
-            new_image_url = fileService.serializeImageUrl(file.filename);  
+            new_image_url = fileService.serializeImageUrl(file.filename, 'banners');  
         } 
 
         try {

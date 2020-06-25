@@ -65,9 +65,9 @@ class PromotionController {
 
         for (let i = 0; i < files.length; i++) {
             if (files[i].originalname == mainImageNew) 
-               mainImageNew = fileService.serializeImageUrl(files[i].filename);
+               mainImageNew = fileService.serializeImageUrl(files[i].filename, 'promotions');
 
-           serializedFiles.push(fileService.serializeImageUrl(files[i].filename))
+           serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
         }
 
         const db_prod = await productService.findInIdsWithoutFilter(products.split(','));
@@ -122,9 +122,9 @@ class PromotionController {
         if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 if (files[i].originalname == mainImageNew) 
-                    mainImageNew = fileService.serializeImageUrl(files[i].filename);
+                    mainImageNew = fileService.serializeImageUrl(files[i].filename, 'promotions');
 
-                serializedFiles.push(fileService.serializeImageUrl(files[i].filename))
+                serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
             }
         }
         try {
