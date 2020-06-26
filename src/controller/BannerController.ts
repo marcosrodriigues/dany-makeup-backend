@@ -1,4 +1,4 @@
-import { Request, Response, request } from "express";
+import { Request, Response } from "express";
 import FileService from "../services/FileService";
 import BannerService from "../services/BannerService";
 
@@ -35,6 +35,17 @@ class BannerController {
         try {
             const one = await service.findOne(Number(id));
             return response.json(one);
+        } catch (err) {
+            console.log("erro show banner controller", err)
+            return response.status(400).json({ error: err });
+         }
+    }
+
+    async available(request: Request, response: Response ) { 
+        try {
+            
+            const availables = await service.findAvailables();
+            return response.json(availables);
         } catch (err) {
             console.log("erro show banner controller", err)
             return response.status(400).json({ error: err });

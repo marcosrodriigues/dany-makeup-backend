@@ -39,6 +39,21 @@ class BannerService {
         }
     }
 
+    async findAvailables() {
+        try {
+            const banners = await connection('banners')
+                .where({ removed: false })
+                .andWhere('start', '<=', new Date())
+                .andWhere('end', '>=', new Date())
+                .distinct()
+                .select('*')
+                .orderBy('end', 'asc')
+            return banners;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async store(banner: IBanner) {
         try {
             await connection('banners').insert({

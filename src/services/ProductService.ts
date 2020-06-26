@@ -1,5 +1,4 @@
 import IProduct from '../interface/IProduct';
-import { SERVER_IP } from '../config/info';
 import connection from '../database/connection';
 import ManufacturerService from './ManufacturerService';
 
@@ -195,11 +194,35 @@ class ProductService {
         
     }
 
-
     async findInIdsWithoutFilter(ids: number[]) {
         try {
             const all = await connection('products').whereIn('id', ids).select('*');
             return all;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async findByCategoryAndSearch(category_id = 0, search = '') {
+        const query = connection('products')
+            .where('products.removed', false);
+        
+        if (search !== '') {
+            query.andWhere(function () {
+                this.where('name', 'like', `%${search}%`)
+                    .orWhere('shortDescription', 'like', `%${search}%`)
+                    .orWhere('fullDescription', 'like', `%${search}%`)
+            })
+        }
+
+        if (category_id !== 0) {
+            query.join('category_product', 'category_product.product_id', 'products.id')
+                .andWhere('category_id', category_id)
+        }
+
+        try {
+            const products = await query.select('products.*');
+            return products
         } catch (err) {
             throw err;
         }

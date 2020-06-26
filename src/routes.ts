@@ -59,15 +59,22 @@ routes.put('/promotions', uploads.array('files[]'), promotionController.update)
 routes.delete('/promotions/:id', promotionController.delete)
 
 routes.get('/banners', bannerController.index)
+routes.get('/banners', bannerController.index)
 routes.get('/banners/:id', bannerController.show)
 routes.post('/banners', uploads.single('image'), bannerController.store)
 routes.put('/banners', uploads.single('image'), bannerController.update)
 routes.delete('/banners/:id', bannerController.delete)
 
-
 routes.get('/product_images/:id', productImagesController.show)
+
+
+routes.get('/mobile/banners', bannerController.available)
+routes.get('/mobile/promotions', promotionController.available)
+routes.get('/mobile/products', productController.list)
+
 
 routes.use(auth);
 routes.get('/auth/me', userController.me);
 
 export default routes;
+

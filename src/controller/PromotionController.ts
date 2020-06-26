@@ -178,6 +178,17 @@ class PromotionController {
         }
 
     }
+
+    async available(request: Request, response: Response ) { 
+        try {
+            
+            const availables = await service.findAvailables();
+            return response.json(availables);
+        } catch (err) {
+            console.log("erro show promotion controller", err)
+            return response.status(400).json({ error: err });
+         }
+    }
 }
 
 export default PromotionController;

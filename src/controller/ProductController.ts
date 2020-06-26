@@ -186,6 +186,23 @@ class ProductController {
 
         return response.status(200).json({ message: 'removed'});
     }
+
+    async list(request:Request, response: Response) {
+        const {
+            category_id = 0,
+            search = ''
+        } = request.query;
+
+        try {
+            const products = await service.findByCategoryAndSearch(Number(category_id), String(search));
+            return response.json(products);
+        } catch (err) {
+            console.log(err);
+            return response.status(400).json({ error: err })
+        }
+
+     }
+
 }
 
 export default ProductController;

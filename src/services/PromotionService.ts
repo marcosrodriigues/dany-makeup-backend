@@ -187,6 +187,20 @@ class PromotionService {
             throw err;
         }
     }
+    async findAvailables() {
+        try {
+            const promotions = await connection('promotions')
+                .where({ removed: false })
+                .andWhere('start', '<=', new Date())
+                .andWhere('end', '>=', new Date())
+                .distinct()
+                .select('*')
+                .orderBy('id', 'desc')
+            return promotions;
+        } catch (err) {
+            throw err;
+        }
+    }
 }
 
 export default PromotionService;
