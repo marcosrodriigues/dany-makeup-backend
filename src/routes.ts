@@ -14,6 +14,7 @@ import ManufacturerController from './controller/ManufacturerController';
 import ProductImagesController from './controller/ProductImagesController';
 import PromotionController from './controller/PromotionController';
 import BannerController from './controller/BannerController';
+import CorreiosController from './controller/CorreiosController';
 
 const userController = new UserController();
 const categoryController = new CategoryController();
@@ -22,6 +23,7 @@ const manufacturerController = new ManufacturerController();
 const productImagesController = new ProductImagesController();
 const promotionController = new PromotionController();
 const bannerController = new BannerController();
+const correiosControoler = new CorreiosController();
 
 routes.get('/users', userController.index);
 
@@ -66,6 +68,8 @@ routes.put('/banners', uploads.single('image'), bannerController.update)
 routes.delete('/banners/:id', bannerController.delete)
 
 routes.get('/product_images/:id', productImagesController.show)
+
+routes.get('/correios/frete', correiosControoler.frete)
 
 
 routes.get('/mobile/banners', bannerController.available)
