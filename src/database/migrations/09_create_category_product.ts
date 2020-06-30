@@ -5,9 +5,9 @@ export async function up(knex: Knex) {
         table.increments('id').primary();
 
         table.integer('category_id').notNullable().unsigned();
-        table.foreign('category_id').references('categorys.id')
-
         table.integer('product_id').notNullable().unsigned();
+        
+        table.foreign('category_id').references('categorys.id')
         table.foreign('product_id').references('products.id');
     });
 }

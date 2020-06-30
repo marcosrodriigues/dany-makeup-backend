@@ -6,15 +6,12 @@ export async function up(knex: Knex) {
         table.string('name');
         table.string('cep');
         table.string('street').notNullable();
+        table.string('city').notNullable();
+        table.string('uf', 2).notNullable();
         table.string('number');
         table.string('neighborhood');
         table.string('reference');
         table.string('complement');
-        table.string('city').notNullable();
-        table.string('uf', 2).notNullable();
-
-        table.integer('user_id').notNullable().unsigned();
-        table.foreign('user_id').references('users.id').onDelete('cascade');
     });
 }
 

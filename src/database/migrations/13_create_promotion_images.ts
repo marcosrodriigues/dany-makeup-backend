@@ -3,9 +3,12 @@ import Knex from 'knex';
 export async function up(knex: Knex) {
     return knex.schema.createTable('promotion_images', table => {
         table.increments('id').primary();
-        table.string('url').notNullable();
+        
+        table.integer('image_id').notNullable().unsigned();
+        table.foreign('image_id').references('images.id').onDelete('cascade');
+
         table.integer('promotion_id').notNullable().unsigned();
-        table.foreign('promotion_id').references('promotions.id').onDelete('cascade');
+        table.foreign('promotion_id').references('promotions.id');
     });
 }
 

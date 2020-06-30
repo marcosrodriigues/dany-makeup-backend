@@ -1,4 +1,5 @@
 import Knex from 'knex';
+import { convertToDatabaseDate } from '../../util/util';
 
 export async function up(knex: Knex) {
     return knex.schema.createTable('manufacturers', table => {
@@ -7,6 +8,7 @@ export async function up(knex: Knex) {
         table.string('image_url').notNullable();
         table.text('description').notNullable();
         table.boolean('removed').defaultTo(false);
+        table.dateTime('created_at').defaultTo(convertToDatabaseDate(new Date()));
     });
 }
 
