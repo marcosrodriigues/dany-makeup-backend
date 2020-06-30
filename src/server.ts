@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import routes from './routes';
+import routes from './routes/routes';
 import path from 'path';
 import { errors } from 'celebrate';
 
