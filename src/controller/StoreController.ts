@@ -119,19 +119,7 @@ class StoreController {
 
         let store: any = { id, name, description, image_url };
         
-        if (file) {
-            try {
-                const stor = await service.findOne(id);
-                await fileService.remove(stor.image_url)
-            } catch (err) {
-                console.log("erro update (file) store controller", err)
-            }
-
-            store = {
-                ...store,
-                image_url: fileService.serializeImageUrl(file.filename, 'stores')
-            }
-        }
+        store = fileService.deleteFileAndSerializeNewFile(file, service, store, 'stores')
 
         const address = {
             id: address_id,
@@ -161,13 +149,7 @@ class StoreController {
         if (!id) return response.status(400).json({ error: 'No store provided!' });
 
         try {
-            const store = await service.findOne(Number(id));
-            await fileService.remove(store.image_url)
-        } catch (err) {
-            console.log("erro delete (file) store controller", err)
-        }
-
-        try {
+            await fileService.deleteFile(service, Number(id));
             await service.delete(Number(id));
             return response.json({ message: 'success' });
         } catch (err) {

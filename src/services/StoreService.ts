@@ -47,8 +47,8 @@ class StoreService {
         try {
             const address_id = await insert('address', address);
             store.address_id = address_id[0];
-            const insertedIds = await insert('stores', store);
-            return insertedIds;
+            await insert('stores', store);
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }

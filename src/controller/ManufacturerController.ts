@@ -89,21 +89,9 @@ class ManufacturerController {
         const { file } = request;
 
         let manufacturer: any = { id, name, description, image_url };
-        
-        if (file) {
-            try {
-                const manufacture = await service.findOne(id);
-                await fileService.remove(manufacture.image_url)
-            } catch (err) {
-                console.log("erro update (file) manufacturer controller", err)
-            }
-
-            manufacturer = {
-                ...manufacturer,
-                image_url: fileService.serializeImageUrl(file.filename, 'manufacturers')
-            }
-        }
-
+       
+        manufacturer = fileService.deleteFileAndSerializeNewFile(file, service, manufacturer, 'manufacturers')
+       
         try {
             await service.update({ manufacturer });
             return response.json({ message: 'success' });
@@ -120,13 +108,7 @@ class ManufacturerController {
         if (!id) return response.status(400).json({ error: 'No manufacturer provider!' });
 
         try {
-            const manufacture = await service.findOne(Number(id));
-            await fileService.remove(manufacture.image_url)
-        } catch (err) {
-            console.log("erro delete (file) manufacturer controller", err)
-        }
-
-        try {
+            await fileService.deleteFile(service, Number(id));
             await service.delete(Number(id));
             return response.json({ message: 'success' });
         } catch (err) {

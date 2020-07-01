@@ -15,8 +15,19 @@ class BannerController {
 
         const offset = Number(limit) * (Number(page) - 1);
 
+        const options = {
+            filter: {
+                name: String(name),
+                description: String(name)
+            },
+            pagination: {
+                limit: limit,
+                offset: offset
+            }
+        }
+
         try {
-            const { banners, count } = await service.findAll(String(name), Number(limit), offset);
+            const { banners, count } = await service.find(options);
 
             response.setHeader("x-total-count", Number(count));
             response.setHeader("Access-Control-Expose-Headers", "x-total-count");
@@ -43,7 +54,6 @@ class BannerController {
 
     async available(request: Request, response: Response ) { 
         try {
-            
             const availables = await service.findAvailables();
             return response.json(availables);
         } catch (err) {
@@ -59,30 +69,29 @@ class BannerController {
             start,
             end
         } = request.body;
-
         const { file } = request;
 
-        if (!file) {
-            console.log("NO FILE PROVIDED BANNER STORE");
-            return response.status(400).json({error: 'No file provided!'});
-        }
+        if (!file) return response.status(400).json({error: 'No file provided!'});
 
         const image_url = fileService.serializeImageUrl(file.filename, 'banners');
 
+        const banner = {
+            name,
+            description,
+            start,
+            end,
+            image_url
+        }
+
         try {
-            await service.store({
-                name,
-                description,
-                start,
-                end,
-                image_url
-            });
-            return response.json({ status: 'created' })
+            await service.store({ banner });
+            return response.json({ status: 'success' })
         } catch (err) {
             console.log('ERROR BANNER CONTROLE - STORE', err);
             return response.json({ error: err })
         }
     }
+
     async update(request: Request, response: Response ) { 
         const {
             id,
@@ -92,42 +101,18 @@ class BannerController {
             end,
             image_url
         } = request.body;
-
         const { file } = request;
 
-        if (!file && image_url === "") {
-            console.log("NO FILE PROVIDED BANNER STORE");
-            return response.status(400).json({error: 'No file provided!'});
-        }
+        if (!id) return response.status(400).json({ error: 'No banner provided! '});
 
-        if (!id) {
-            console.log("No banner id provided");
-            return response.status(400).json({error: 'No banner provided!'});
-        }
+        let data : any = { id, name, description, start, end, image_url };
+
+        const banner = await fileService
+            .deleteFileAndSerializeNewFile(file, service, data, 'banners');
 
         try {
-            const banner = await service.findOne(Number(id));
-            if (banner.image_url !== image_url)
-                await fileService.remove(banner.image_url);
-        } catch (err) {
-            console.log("not possible to remove file in update banner", err);
-        }
-            
-        let new_image_url = image_url;
-        if (file) {
-            new_image_url = fileService.serializeImageUrl(file.filename, 'banners');  
-        } 
-
-        try {
-            await service.update({
-                id,
-                name,
-                description,
-                start,
-                end,
-                image_url: new_image_url
-            });
-            return response.json({ status: 'updated' })
+            await service.update({ banner });
+            return response.json({ message: 'success' })
         } catch (err) {
             console.log('ERROR BANNER CONTROLE - UPDATE', err);
             return response.json({ error: err })
@@ -136,18 +121,13 @@ class BannerController {
     
     async delete(request: Request, response: Response ) { 
         const { id } = request.params;
+
         if (!id) return response.status(400).json({ error: 'No banner provided! '});
         
         try {
-            const banner = await service.findOne(Number(id));
-            await fileService.remove(banner.image_url);
-        } catch (err) {
-            console.log("Error delete file banner controller", err)
-        }
-
-        try {
+            await fileService.deleteFile(service, Number(id));
             await service.delete(Number(id));
-            return response.json({ message: 'removed'});
+            return response.json({ message: 'success'});
         } catch (err) {
             console.log('ERROR BANNER CONTROLLER DELETE', err);
             return response.status(400).json({ error: err});

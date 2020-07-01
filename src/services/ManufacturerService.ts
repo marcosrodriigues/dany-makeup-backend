@@ -76,7 +76,7 @@ class ManufacturerService {
                     ['id', '=', id]
                 ]
             });
-            return { status: 'deleted' };
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }

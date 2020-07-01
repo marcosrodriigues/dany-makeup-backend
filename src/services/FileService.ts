@@ -37,6 +37,28 @@ class FileService {
     serializeImageUrl(filename: string, folder: string) {
         return `${SERVER_IP}/uploads/${folder}/${filename}`
     }
+
+    async deleteFile(service: any, id: number) {
+        try {
+            const obj = await service.findOne(id);
+            await this.remove(obj.image_url)
+        } catch (err) {
+            console.log("ERROR removing file", err)
+        }
+    }
+
+    async deleteFileAndSerializeNewFile(file: Express.Multer.File, service: any, data: { id: number, image_url?: string }, folder: string) {
+        if (file) {
+            this.deleteFile(service, data.id)   
+
+            data = {
+                ...data,
+                image_url: this.serializeImageUrl(file.filename, folder)
+            }
+        }
+
+        return data;
+    }
 }
 
 export default FileService;

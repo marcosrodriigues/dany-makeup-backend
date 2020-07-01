@@ -1,38 +1,37 @@
-import IBanner from "../interface/IBanner";
 import connection from "../database/connection";
 import { convertToDatabaseDate } from "../util/util";
+import { buildConditions, select, count, insert, update, remove } from "../database/sqlBuilder";
 
 class BannerService {
-    async findAll(search = "", limit = 5, offset = 0) {
+    async find(params = { filter: { }, pagination: {} }) {
+        const { filter, pagination } = params;
+        
+        const conditions = buildConditions({ filter });
+
         try {
-            var query = connection('banners').where({removed: false}).select('*')
-            var queryCount = connection('banners').where({removed: false}).count('id', { as : 'count'});
-
-            if (search !== "") {
-                query.andWhere(function() {
-                    this.where('name', 'like', `%${search}%`)
-                    .orWhere('description', 'like', `%${search}%`)
-                })
-                queryCount.andWhere(function() {
-                    this.where('name', 'like', `%${search}%`)
-                    .orWhere('description', 'like', `%${search}%`)
-                })
+            const options: any  = {
+                fields: ['*'],
+                conditions: conditions,
+                pagination: pagination
             }
+            const result = await select('banners', options);
+            const counter = await count('banners', options);
 
-            query.limit(limit).offset(offset);
-
-            const banners = await query;
-            const counter = await queryCount;
-    
-            return { banners, count: counter[0].count  };
+            return { banners: result , count: counter[0].count  };
         } catch (err) {
             throw err;
         }
     }
 
     async findOne(id: number) {
+        if (id === 0) throw "Banner not provided";
+
         try {
-            const banner = await connection('banners').where({ id, removed: false }).first();
+            const banner = (await select('banners', {
+                fields: [],
+                conditions: [['id', '=', id]]
+            }))[0];
+
             return banner;
         } catch (err) {
             throw err;
@@ -54,42 +53,50 @@ class BannerService {
         }
     }
 
-    async store(banner: IBanner) {
+    async store(data = { banner: {} }) {
+        const { banner } = data;
         try {
-            await connection('banners').insert({
-                name: banner.name,
-                description: banner.description,
+            await insert('banners', {
+                ...banner,
                 start: convertToDatabaseDate(banner.start),
-                end: convertToDatabaseDate(banner.end),
-                image_url: banner.image_url
+                end: convertToDatabaseDate(banner.end)
             });
-            return true;
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }
     }
 
-    async update(banner: IBanner) {
-        if (!banner.id) throw "No banner provided";
+    async update(data = { banner: {} }) {
+        const { banner } = data;
         
         try {
-            await connection('banners').update({
-                name: banner.name,
-                description: banner.description,
-                start: convertToDatabaseDate(banner.start),
-                end: convertToDatabaseDate(banner.end),
-                image_url: banner.image_url
-            }).where('id', banner.id);
-            return;
+            await update('banners', {
+                data: {
+                    ...banner,
+                    start: convertToDatabaseDate(banner.start),
+                    end: convertToDatabaseDate(banner.end)
+                },
+                conditions: [
+                    ['id', '=', banner.id]
+                ]
+            });
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }
     }
 
     async delete(id: number) {
+        if (id === 0) return;
+
         try {
-            await connection('banners').where({id}).update({removed: true});
-            return;
+            await remove('banners', {
+                conditions: [
+                    ['id', '=', id]
+                ]
+            });
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }

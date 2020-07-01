@@ -1,83 +1,88 @@
 import database from '../database/connection';
 import ICategory from '../interface/ICategory';
 import { SERVER_IP } from '../config/info';
+import { buildConditions, select, count, insert, update, remove } from '../database/sqlBuilder';
 
 class CategoryService {
-    async findWithoutFilter() {
-        try {
-            const all = await database('categorys').where('removed', false).select('*')
-            return all;
-        } catch (err) {
-            throw err;
-        }
-    }
+    async find(params = { filter: { }, pagination: {} }) {
+        const { filter, pagination } = params;
 
-    async findAll(title = "", limit = 5, offset = 0) {
-        var query = database('categorys').select('*').where('removed', false)
-        var queryCount = database('categorys').count('id', { as : 'count'});
-
-        if (title !== "") {
-            query.andWhere('title', 'like', `%${title}%`);
-            queryCount.andWhere('title', 'like', `%${title}%`);
-        }
-
-        query.limit(limit).offset(offset);
+        const conditions = buildConditions({ filter });
 
         try {
-            const categorys = await query;
-            const counter = await queryCount;
+            const options: any  = {
+                fields: ['*'],
+                conditions: conditions,
+                pagination: pagination
+            }
     
-            await Promise.all(categorys.map(async cat => {
+            const result = await select('categorys', options);
+            const counter = await count('categorys', options);
+
+            await Promise.all(result.map(async cat => {
                 cat.qtd_produtos = await this.countProducts(cat.id);
             }))
     
-            return { categorys, count: counter[0].count  };
+            return { categorys: result, count: counter[0].count  };
         } catch (err) {
             throw err;
         }
     }
 
     async findOne(id: number) {
-        const one = await database('categorys').where('id', '=', id).select('*').first();
-        return one;
-    }
+        if (id <= 0) return undefined;
 
-    async store(category: ICategory) {
         try {
-            const id = await database('categorys').insert(category);
-            const saved = await database('categorys').where('id', '=', id).select('*');
-            return saved;
+            const category = (await select('categorys', {
+                fields: [],
+                conditions: [['id', '=', id]]
+            }))[0];
+            return category;
         } catch (err) {
             throw err;
         }
         
     }
 
-    async update(category: ICategory) {
+    async store(data = { category: {} }) {
+        const { category } = data;
         try {
-            if (!category.id) return undefined;
-    
-            const saved = await database('categorys').where('id', '=', category.id).update(category);
-            return saved;
+            await insert('categorys', category);
+            return { message: 'success' };
+        } catch (err) {
+            throw err;
+        }
+        
+    }
+
+    async update(data = { category: { } }) {
+        const { category } = data;
+        try {
+            await update('categorys', {
+                data: category,
+                conditions: [[
+                    'id', '=', category.id
+                ]]
+            })
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }
     }
 
-    async delete(category_id: number) {
+    async delete(id: number) {
+        if (id === 0) throw "No category provided";
+        
         try {
-            await database('categorys').where('id', '=', category_id).delete();
-            return;
+            await remove('categorys', {
+                conditions: [
+                    ['id', '=', id]
+                ]
+            });
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }
-    }
-
-    serialize(category: ICategory) {
-        return {
-            ...category,
-            image_url: `${SERVER_IP}/uploads/${category.image_url}`
-        };
     }
 
     async countProducts(id: number) {
