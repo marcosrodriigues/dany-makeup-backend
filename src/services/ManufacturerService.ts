@@ -1,11 +1,26 @@
-import IManufacturer from "../interface/IManufacturer";
 import connection from '../database/connection';
+import { buildConditions, select, count, insert, update, remove } from "../database/sqlBuilder";
 
 class ManufacturerService {
-    async findWithoutFilter() {
+    async find(params = { filter: { }, pagination: {} }) {
+        const { filter, pagination } = params;
+        
+        const conditions = buildConditions({ filter });
+
         try {
-            const all = await connection('manufacturers').where('removed', false).select('*')
-            return all;
+            const options: any  = {
+                fields: ['*'],
+                conditions: conditions,
+                pagination: pagination
+            }
+            const result = await select('manufacturers', options);
+            const counter = await count('manufacturers', options);
+
+            await Promise.all(result.map(async manufac => {
+                manufac.qtd_produtos = await this.countProducts(manufac.id);
+            }))
+
+            return { manufacturers: result , count: counter[0].count  };
         } catch (err) {
             throw err;
         }
@@ -15,62 +30,52 @@ class ManufacturerService {
         if (id <= 0) return undefined;
 
         try {
-            const manufacturer = await connection('manufacturers').where('id', id).first();
+            const manufacturer = (await select('manufacturers', {
+                fields: [],
+                conditions: [['id', '=', id]]
+            }))[0];
             return manufacturer;
         } catch (err) {
             throw err;
         }
         
     }
-
-    async findAll(name = "", limit = 5, offset = 0) {
-        var query = connection('manufacturers').select('*')
-        var queryCount = connection('manufacturers').count('id', { as : 'count'});
-
-        if (name !== "") {
-            query.where('name', 'like', `%${name}%`);
-            queryCount.where('name', 'like', `%${name}%`);
-        }
-
-        query.limit(limit).offset(offset);
-
+    
+    async store(data = { manufacturer: {}}) {
+        const { manufacturer } = data;
         try {
-            const manufacturers = await query;
-            const counter = await queryCount;
-    
-            await Promise.all(manufacturers.map(async manufac => {
-                manufac.qtd_produtos = await this.countProducts(manufac.id);
-            }))
-    
-            return { manufacturers, count: counter[0].count  };
+            const insertedIds = await insert('manufacturers', manufacturer);
+            return insertedIds;
         } catch (err) {
             throw err;
         }
     }
 
-    async store(manufacturer: IManufacturer) {
-        try {
-            const id = await connection('manufacturers').insert(manufacturer);
-            return await connection('manufacturers').where('id', id).first('*');
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async update(manufacturer: IManufacturer) {
-        if (!manufacturer.id) return undefined;
+    async update(data = { manufacturer: {}}) {
+        const { manufacturer } = data;
 
         try {
-            const id = await connection('manufacturers').where('id', manufacturer.id).update(manufacturer);
-            return await connection('manufacturers').where('id', id).select('*');
+            await update('manufacturers', {
+                data: manufacturer,
+                conditions:[[
+                    'id', '=', manufacturer.id
+                ]]
+            })
+            return { message: 'success'}
         } catch (err) {
             throw err;
         }
     }
 
     async delete(id: number) {
+        if (id === 0) return;
+
         try {
-            await connection('manufacturers').where('id', id).delete();
+            await remove('manufacturers', {
+                conditions: [
+                    ['id', '=', id]
+                ]
+            });
             return { status: 'deleted' };
         } catch (err) {
             throw err;

@@ -21,11 +21,30 @@ class StoreService {
         }
     }
 
+    async findOne(id: number) {
+        if (id === 0) throw "Store not provided";
+
+        try {
+            const store = (await select('stores', {
+                fields: [],
+                conditions: [['id', '=', id]]
+            }))[0];
+
+            store.address = (await select('address', {
+                fields: [],
+                conditions: [['id', '=', store.address_id]]
+            }))[0];
+
+            return store;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async store(data = { store: {}, address: {} }) { 
         const { store, address } = data;
 
         try {
-            
             const address_id = await insert('address', address);
             store.address_id = address_id[0];
             const insertedIds = await insert('stores', store);
@@ -52,26 +71,6 @@ class StoreService {
                 ]
             });
             return { message: 'success' }
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async findOne(id: number) {
-        if (id === 0) throw "Store not provided";
-
-        try {
-            const store = (await select('stores', {
-                fields: [],
-                conditions: [['id', '=', id]]
-            }))[0];
-
-            store.address = (await select('address', {
-                fields: [],
-                conditions: [['id', '=', store.address_id]]
-            }))[0];
-
-            return store;
         } catch (err) {
             throw err;
         }

@@ -19,7 +19,6 @@ class StoreController {
          const options = {
             filter: {
                 name: String(name),
-                description: String(name)
             },
             pagination: {
                 limit: limit,
@@ -28,10 +27,10 @@ class StoreController {
         }
 
          try {
-                const { stores, count } = await service.find(options);
-                response.setHeader("x-total-count", Number(count));
-                response.setHeader("Access-Control-Expose-Headers", "x-total-count");
-                return response.json(stores);
+            const { stores, count } = await service.find(options);
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            return response.json(stores);
          } catch (err) {
             console.log("erro index store controller", err)
             return response.status(400).json({ error: err });

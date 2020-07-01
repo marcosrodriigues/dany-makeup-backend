@@ -116,6 +116,5 @@ export const buildConditions = (options: { filter: { }}) => {
             conditions.push([`${key}`, 'LIKE', `%${value}%`])
     }
 
-    console.log('conditions', conditions)
     return conditions;
 }

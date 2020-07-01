@@ -12,22 +12,25 @@ class ManufacturerController {
             page = 1,
             name = '',
             limit = 5,
-            filter = true
          } = request.query;
 
          const offset = Number(limit) * (Number(page) - 1);
 
-         try {
-            if (filter === true) {
-                const { manufacturers, count } = await service.findAll(String(name), Number(limit), offset);
-
-                response.setHeader("x-total-count", Number(count));
-                response.setHeader("Access-Control-Expose-Headers", "x-total-count");
-                return response.json(manufacturers);
+         const options = {
+            filter: {
+                name: String(name),
+            },
+            pagination: {
+                limit: limit,
+                offset: offset
             }
+        }
 
-            const manufactures = await service.findWithoutFilter();
-            return response.json(manufactures);
+         try {
+            const { manufacturers, count } = await service.find(options);
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
+            return response.json(manufacturers);
          } catch (err) {
             console.log("erro index manufacturer controller", err)
             return response.status(400).json({ error: err });
@@ -58,15 +61,17 @@ class ManufacturerController {
         const { file } = request;
 
         if (!file) return response.status(400).json({ error: "No image provided!" });
-
         const image_url = fileService.serializeImageUrl(file.filename, 'manufacturers');
         
+        const manufacturer = {
+            name,
+            description,
+            image_url
+        }
+
         try {
-            const manufactured = await service.store({
-                name, description, image_url
-            });
-    
-            return response.json(manufactured);
+            await service.store({ manufacturer });
+            return response.json({ message: 'success' });
         } catch( err) {
             console.log("erro store manufacturer controller", err)
             return response.status(400).json(err);
@@ -91,7 +96,6 @@ class ManufacturerController {
                 await fileService.remove(manufacture.image_url)
             } catch (err) {
                 console.log("erro update (file) manufacturer controller", err)
-                //return response.status(400).json({ error: err });
             }
 
             manufacturer = {
@@ -101,8 +105,8 @@ class ManufacturerController {
         }
 
         try {
-            const saved = await service.update(manufacturer);
-            return response.json(saved);
+            await service.update({ manufacturer });
+            return response.json({ message: 'success' });
         } catch (err) {
             console.log("erro update manufacturer controller", err)
             return response.status(400).json({ error: err });
@@ -120,12 +124,11 @@ class ManufacturerController {
             await fileService.remove(manufacture.image_url)
         } catch (err) {
             console.log("erro delete (file) manufacturer controller", err)
-            //return response.status(400).json({ error: err });
         }
 
         try {
             await service.delete(Number(id));
-            return response.json({ status: 'deleted' });
+            return response.json({ message: 'success' });
         } catch (err) {
             console.log("erro delete manufacturer controller", err);
             return response.status(400).json({ error: err });
