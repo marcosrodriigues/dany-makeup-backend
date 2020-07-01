@@ -12,22 +12,26 @@ class StoreController {
             page = 1,
             name = '',
             limit = 5,
-            filter = true
          } = request.query;
 
          const offset = Number(limit) * (Number(page) - 1);
 
-         try {
-            if (filter === true) {
-                const { stores, count } = await service.find(String(name), Number(limit), offset);
+         const options = {
+            filter: {
+                name: String(name),
+                description: String(name)
+            },
+            pagination: {
+                limit: limit,
+                offset: offset
+            }
+        }
 
+         try {
+                const { stores, count } = await service.find(options);
                 response.setHeader("x-total-count", Number(count));
                 response.setHeader("Access-Control-Expose-Headers", "x-total-count");
                 return response.json(stores);
-            }
-
-            const stores = await service.find('', 500, 0);
-            return response.json(stores);
          } catch (err) {
             console.log("erro index store controller", err)
             return response.status(400).json({ error: err });
@@ -122,7 +126,6 @@ class StoreController {
                 await fileService.remove(stor.image_url)
             } catch (err) {
                 console.log("erro update (file) store controller", err)
-                //return response.status(400).json({ error: err });
             }
 
             store = {

@@ -1,24 +1,19 @@
-import connection from "../database/connection";
-import IStore from "../interface/IStore";
-import { insert, select, remove, update } from "../database/sqlBuilder";
+import { insert, select, remove, update, count, buildConditions } from "../database/sqlBuilder";
 
 class StoreService {
-    async find(name = "", limit = 5, offset = 0) {
-        var query = connection('stores')
-            .select<[IStore]>('stores.*')
-        var queryCount = connection('stores')
-            .count('id', { as : 'count'});
+    async find(params = { filter: { }, pagination: {} }) {
+        const { filter, pagination } = params;
         
-        if (name !== "") {
-            query.where('name', 'like', `%${name}%`);
-            queryCount.where('name', 'like', `%${name}%`);
-        }
-
-        query.limit(limit).offset(offset);
+        const conditions = buildConditions({ filter });
 
         try {
-            const result = await query;
-            const counter = await queryCount;
+            const options: any  = {
+                fields: ['*'],
+                conditions: conditions,
+                pagination: pagination
+            }
+            const result = await select('stores', options);
+            const counter = await count('stores', options);
 
             return { stores: result , count: counter[0].count  };
         } catch (err) {
