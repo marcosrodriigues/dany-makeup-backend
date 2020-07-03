@@ -1,11 +1,9 @@
 import ProductService from "../services/ProductService";
 import { Request, Response } from "express";
-import ManufacturerService from "../services/ManufacturerService";
 import ProductImagesService from "../services/ProductImagesService";
 import FileService from "../services/FileService";
 
 const service = new ProductService();
-const manufacturerService = new ManufacturerService();
 const piService = new ProductImagesService();
 const fileService = new FileService();
 
@@ -19,9 +17,20 @@ class ProductController {
 
         const offset = Number(limit) * (Number(page) - 1);
 
-        try {
-            const { products, count } = await service.findAll(String(name), Number(limit), offset);
+        const options = {
+            filter: {
+                name: String(name),
+                short_description: String(name),
+                full_description: String(name)
+            },
+            pagination: {
+                limit,
+                offset
+            }
+        }
 
+        try {
+            const { products, count } = await service.find(options);
             response.setHeader("x-total-count", Number(count));
             response.setHeader("Access-Control-Expose-Headers", "x-total-count");
             return response.json(products);
@@ -40,54 +49,55 @@ class ProductController {
     async store(request:Request, response: Response) {
         const {
             name,
-            shortDescription,
-            fullDescription,
+            short_description,
+            full_description,
             value,
             amount,
             categorys,
-            mainImage,
+            image_url,
             manufacturer_id,
-         } = request.body;
-         const available = request.body.available === "true";
 
+            store_id,
+            amounts
+
+         } = request.body;
          const { files } = request;
 
-         let serializedFiles = [];
-         let mainImageNew = "";
+         if (!files) return response.status(400).json({ error: 'No files provided' });
 
-         if (!files) {
-            console.log("no files provided");
-            return response.status(400).json({ error: 'No files provided' });
-         }
-
+         let final_image_url;
+         let images = []
          for (let i = 0; i < files.length; i++) {
-             if (files[i].originalname == mainImage) 
-                mainImageNew = fileService.serializeImageUrl(files[i].filename, 'products');
+             if (files[i].originalname == image_url) 
+                final_image_url = fileService.serializeImageUrl(files[i].filename, 'products');
 
-            serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'products'));
+            images.push(fileService.serializeImageUrl(files[i].filename, 'products'));
          }
 
-         const manufacturer = await manufacturerService.findOne(manufacturer_id) ;
-         
-
-         if (!manufacturer) {
-             console.log("no manufacturer_id provided");
-             return response.status(400).json({ error: 'No manufacturer provided' });
+         const product = {
+            name,
+            short_description,
+            full_description,
+            value,
+            amount,
+            image_url: final_image_url,
+            manufacturer_id
          }
 
+         const stocks = store_id.map((store, i) => {
+             return {
+                 store_id: store,
+                 amount: amounts[i]
+             }
+         })
+        
          try {
-             const product = await service.store({
-                name,
-                shortDescription,
-                fullDescription,
-                value,
-                amount,
-                available,
-                manufacturer,
-                mainImage: mainImageNew,
-                images: serializedFiles,
-             }, categorys.split(','));
-
+            await service.store({ 
+                product, 
+                images,
+                categorys: categorys.split(','), 
+                stocks 
+            })
 
             return response.json(product);
          } catch (err) {
@@ -100,21 +110,22 @@ class ProductController {
         const {
             id,
             name,
-            shortDescription,
-            fullDescription,
+            short_description,
+            full_description,
             value,
             amount,
             categorys,
-            mainImage,
+            image_url,
             url_images,
-            manufacturer_id
+            manufacturer_id,
+
+            stock_id,
+            amounts
          } = request.body;
-        const available = request.body.available === "true" || request.body.available === "1";
-        
         const { files } = request;
 
-        let serializedFiles = url_images || [];
-        let mainImageNew = "";
+        let images = url_images || [];
+        let final_image_url = "";
 
          if (url_images) {
             const database_files = await piService.findByProduct(id);
@@ -130,38 +141,44 @@ class ProductController {
 
          if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
-                if (files[i].originalname == mainImage) 
-                   mainImageNew = fileService.serializeImageUrl(files[i].filename, 'products');
+                if (files[i].originalname == image_url) 
+                    final_image_url = fileService.serializeImageUrl(files[i].filename, 'products');
    
-                serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'products'))
+                images.push(fileService.serializeImageUrl(files[i].filename, 'products'))
             }
          }
 
-         mainImageNew = mainImageNew !== "" ? mainImageNew : mainImage;
+         final_image_url = final_image_url !== "" ? final_image_url : image_url;
 
-        const manufacturer = await manufacturerService.findOne(manufacturer_id) ;
 
-         if (!manufacturer) {
-             console.log("no manufacturer_id provided");
-             return response.status(400).json({ error: 'No manufacturer provided' });
+
+         const stocks = stock_id.map((stock, i) => {
+            return {
+                id: stock,
+                amount: amounts[i]
+            }
+        })
+
+        const product = {
+            id,
+            name,
+            short_description,
+            full_description,
+            value,
+            amount,
+            image_url: final_image_url,
+            manufacturer_id
          }
 
-
         try {
-            const product = await service.update({
-                id,
-                name,
-                shortDescription,
-                fullDescription,
-                value,
-                amount,
-                available,
-                mainImage: mainImageNew,
-                images: serializedFiles,
-                manufacturer
-            }, categorys.split(','));
+            await service.updates({ 
+                product, 
+                images,
+                categorys: categorys.split(','), 
+                stocks 
+            });
 
-            return response.json(product);
+            return response.json({ message : 'success' });
         } catch (err) {
             console.log(err);
             return response.status(400).json({ error: err })
@@ -179,12 +196,12 @@ class ProductController {
             } catch (err) { }
         })
 
-        const product = await service.findOne(Number(id));
-
-        if (product) 
+        try {
             await service.delete(Number(id));
-
-        return response.status(200).json({ message: 'removed'});
+            return response.json({ message: 'success'});
+        } catch (err) {
+            throw err;
+        }
     }
 
     async list(request:Request, response: Response) {

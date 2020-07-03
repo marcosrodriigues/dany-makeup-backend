@@ -1,185 +1,215 @@
-import IProduct from '../interface/IProduct';
 import connection from '../database/connection';
 import ManufacturerService from './ManufacturerService';
+import { buildConditions, select, count, insert, update, confirmRemove } from '../database/sqlBuilder';
 
 const manufacturerService = new ManufacturerService();
 
 class ProductService {
-    async findAll(input = "", limit = 5, offset = 0) {
+    async find(params = { filter: {}, pagination: {} }) {
+        const { filter, pagination } = params;  
+
+        const conditions = [['products.removed', '=', false]];
+        const orConditions = buildConditions({ filter, table: "products" });
+        const joins = [['manufacturers', 'manufacturers.id', 'products.manufacturer_id']]
+
+        const options: any = {
+            fields: ['products.*'],
+            conditions,
+            orConditions,
+            joins,
+            pagination
+        }
+
         try {
-            const query = connection('products')
-                .join('manufacturers', 'manufacturers.id', 'products.manufacturer_id')
-                .where('products.removed', false)
-                .distinct()
-                .select(['products.*'])
+            const result = await select('products', options);
+            const counter = await count('products', options);
 
-            const queryCount = connection('products')
-                .join('manufacturers', 'manufacturers.id', 'products.manufacturer_id')
-                .where('products.removed', false)
-                .distinct()
-                .count('products.id', { as : 'count' })
+            const products = await Promise.all(result.map(async product => {
+                const category_opt: any = {
+                    fields: ['categorys.*'],
+                    joins: [
+                        ['category_product', 'category_product.category_id', 'categorys.id']
+                    ],
+                    conditions: [
+                        ['category_product.product_id', '=', product.id]
+                    ]
+                }
+                const categorys = await select('categorys', category_opt);
 
-            if(input !== "") {
-                query.andWhere(function() {
-                    this.where('products.name', 'like', `%${input}%`)
-                    .orWhere('shortDescription', 'like', `%${input}%`)
-                    .orWhere('fullDescription', 'like', `%${input}%`);
-                })
-                queryCount.andWhere(function() {
-                    this.where('products.name', 'like', `%${input}%`)
-                    .orWhere('shortDescription', 'like', `%${input}%`)
-                    .orWhere('fullDescription', 'like', `%${input}%`);
-                })
+                const image_opt: any = {
+                    fields: ['images.url'],
+                    joins: [
+                        ['products', 'products.id', 'product_images.product_id'],
+                        ['images', 'images.id', 'product_images.image_id'],
+                    ],
+                    conditions: [
+                        ['product_images.product_id', '=', product.id]
+                    ]
+                }
+
+                const images = await select('product_images', image_opt);
+
+                product.manufacturer = await manufacturerService.findOne(product.manufacturer_id)
+
+                return { product, categorys, images }
+            }))
+
+            return {
+                products,
+                count: counter[0].count
             }
-
-            query.limit(limit).offset(offset);
-
-            const filteredProducts = await query;
-            const counter = await queryCount;
-    
-            const products = await Promise.all(filteredProducts
-                .map(async product => {
-                    const categorys = await connection('categorys')
-                        .join('category_product', 'category_product.category_id', 'categorys.id')
-                        .where('category_product.product_id', product.id)
-                        .distinct()
-                        .select('categorys.*');
-                    
-                    const images = await connection('product_images')
-                        .join('products', 'product_images.product_id', 'products.id')
-                        .where('product_images.product_id', product.id)
-                        .distinct()
-                        .select('product_images.*');
-
-                    const manufacturer = await manufacturerService.findOne(product.manufacturer_id);
-                    product.manufacturer = manufacturer;
-                        
-                    return {product, categorys, images};
-                })
-            );
-
-            return { products, count: counter[0].count };
         } catch (err) {
             throw err;
         }
     }
+
 
     async findOne(id: number) {
         if (!id) throw "Product not provided"
-
+        console.log(id);
         try {
-            const product = await connection('products').where('id', id).select('*').first();
+            const product = (await select('products', {
+                fields: [],
+                conditions: [
+                    ['id', '=', id]
+                ]
+            }))[0];
 
-            const categorys = await connection('categorys')
-                            .join('category_product', 'category_product.category_id', 'categorys.id')
-                            .where('category_product.product_id', product.id)
-                            .distinct()
-                            .select('categorys.*');
-
-            const images = await connection('product_images')
-                            .join('products', 'product_images.product_id', 'products.id')
-                            .where('product_images.product_id', product.id)
-                            .distinct()
-                            .select('product_images.*');
-
-            return {product, categorys, images};
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async store(product: IProduct, categorys: []) {
-        try {
-            const trx = await connection.transaction();
-
-            const id = await trx('products').insert({
-                name: product.name,
-                shortDescription: product.shortDescription,
-                fullDescription: product.fullDescription,
-                amount: product.amount,
-                available: Boolean(product.available),
-                mainImage: product.mainImage,
-                value: Number(product.value).toFixed(2),
-                manufacturer_id: product.manufacturer.id
-            });
-
-            const images = product.images
-                .map(img => {
-                    return {
-                        product_id: id,
-                        url: img
-                    }
-                });
-
-            await trx('product_images').insert(images);
-
-            const products_categorys = categorys
-                .map((cat:string) => Number(cat.trim()))
-                .map((cat_id:number) => {
-                    return {
-                        product_id: id,
-                        category_id: cat_id
-                    }
-                })
-
-            await trx('category_product').insert(products_categorys);
-
-            trx.commit();
-
-            const inserted = await connection('products').where('id','=',id).select('*').first();
-            return inserted;
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    async update(product: IProduct, categorys: []) {
-        if (!product.id) throw "No product provided";
-
-        try {
-            const trx = await connection.transaction();
-
-            await trx('product_images').where({product_id: product.id}).delete();
-            await trx('category_product').where({product_id: product.id}).delete();
-
-            await trx('products').where('id', product.id).update({
-                name: product.name,
-                shortDescription: product.shortDescription,
-                fullDescription: product.fullDescription,
-                amount: product.amount,
-                available: Boolean(product.available),
-                mainImage: product.mainImage,
-                value: Number(product.value).toFixed(2),
-                manufacturer_id: product.manufacturer.id
+            const categorys = await select('categorys', {
+                fields: ['categorys.*'],
+                joins: [
+                    ['category_product', 'category_product.category_id', 'categorys.id']
+                ],
+                conditions: [
+                    ['category_product.product_id', '=', product.id]
+                ]
             })
 
-            const images = product.images
-                .map(img => {
-                    return {
-                        product_id: product.id,
-                        url: img
+            const images = await select('product_images', {
+                fields: ['images.url'],
+                joins: [
+                    ['products', 'products.id', 'product_images.product_id'],
+                    ['images', 'images.id', 'product_images.image_id']
+                ],
+                conditions: [
+                    ['product_images.product_id', '=', product.id]
+                ]
+
+            })
+
+            const stock = await select('store_product', {
+                fields: ['store_product.*', 'stores.name'],
+                joins: [
+                    ['stores', 'stores.id', 'store_product.store_id']
+                ],
+                conditions: [
+                    ['store_product.product_id', '=', product.id]
+                ]
+            })
+
+            return { product, categorys, images, stock };
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async store(data = { product: {}, images: [], categorys: [], stocks: [] }) {
+        const { product, images, categorys, stocks } = data;
+
+        try {
+            const id = await insert('products', product);
+
+            images.map(async img => {
+                const obj = { url: img };
+                const img_id = await insert('images', obj);
+
+                const pi = {
+                    image_id: img_id,
+                    product_id: id[0]
+                }
+                await insert('product_images', pi);
+            })
+
+            categorys.map((cat: string) => Number(cat.trim()))
+                .map(async (cat_id: number) => {
+                    const cp = {
+                        product_id: id[0],
+                        category_id: cat_id
                     }
+                    await insert('category_product', cp)
+                })
+
+            stocks.map(async stock => {
+                const sp = {
+                    product_id: id[0],
+                    store_id: stock.store_id,
+                    amount: stock.amount
+                };
+                await insert('store_product', sp)
             });
 
-            await trx('product_images').insert(images);
+        } catch (err) {
+            throw err;
+        }
+    }
 
-            const products_categorys = categorys
-                .map((cat:string) => Number(cat.trim()))
-                .map((cat_id:number) => {
-                    return {
+    async updates(data = { product: {}, images: [], categorys: [], stocks: [] }) {
+        const { product, images, categorys, stocks } = data;
+
+        try {
+            await update('products', {
+                data: product,
+                conditions: [
+                    ['id', '=', product.id]
+                ]
+            });
+            await confirmRemove('category_product', {
+                conditions: [
+                    ['product_id', '=', product.id]
+                ]
+            });
+            await confirmRemove('product_images', {
+                conditions: [
+                    ['product_id', '=', product.id]
+                ]
+            });
+
+            images.map(async img => {
+                const obj = { url: img };
+                const img_id = await insert('images', obj);
+
+                const pi = {
+                    image_id: img_id,
+                    product_id: product.id
+                }
+                await insert('product_images', pi);
+            })
+
+            categorys.map((cat: string) => Number(cat.trim()))
+                .map(async (cat_id: number) => {
+                    const cp = {
                         product_id: product.id,
                         category_id: cat_id
                     }
+                    await insert('category_product', cp)
                 })
 
-            await trx('category_product').insert(products_categorys);
 
-            trx.commit();
-
-            const updated = this.findOne(product.id);
-            return updated;
+            stocks.map(async stock => {
+                const sp = {
+                    id: stock.id,
+                    amount: stock.amount
+                };
+                await update('store_product', {
+                    data: sp,
+                    conditions: [
+                        ['id', '=', stock.id]
+                    ]
+                })
+            });
+            
+            return { message : 'success' }
         } catch (err) {
-            console.log(err);
             throw err;
         }
     }
@@ -191,37 +221,51 @@ class ProductService {
         } catch (err) {
             throw err;
         }
-        
+
     }
 
     async findInIdsWithoutFilter(ids: number[]) {
+        const options: any = {
+            fields: [],
+            whereIn: [
+                ['id', ids]
+            ]
+        }
         try {
-            const all = await connection('products').whereIn('id', ids).select('*');
-            return all;
+            const products = await select('products', options);
+            return products;
         } catch (err) {
             throw err;
         }
     }
 
-    async findByCategoryAndSearch(category_id = 0, search = '') {
-        const query = connection('products')
-            .where('products.removed', false);
-        
-        if (search !== '') {
-            query.andWhere(function () {
-                this.where('name', 'like', `%${search}%`)
-                    .orWhere('shortDescription', 'like', `%${search}%`)
-                    .orWhere('fullDescription', 'like', `%${search}%`)
-            })
+    async findByCategoryAndSearch(data = { category_id: 0, search: '' }) {
+        const { category_id, search } = data;
+        const options: any = {
+            fields: ['products.*'],
+            conditions: [
+                ['products.removed', '=', false]
+            ]
         }
 
         if (category_id !== 0) {
-            query.join('category_product', 'category_product.product_id', 'products.id')
-                .andWhere('category_id', category_id)
+            options.joins = [
+                ['category_product', 'category_product.product_id', 'products.id']
+            ]
         }
 
+        if (search) {
+            const filter = {
+                name: search,
+                short_description: search,
+                full_description: search
+            };
+
+            options.orConditions = buildConditions({ filter });
+        }
+        
         try {
-            const products = await query.select('products.*');
+            const products = await select('products', options);
             return products
         } catch (err) {
             throw err;

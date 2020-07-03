@@ -8,11 +8,10 @@ interface IProduct {
     fullDescription: string,
     value: number,
     amount: number,
-    available: boolean,
     categorys?: ICategory[],
-    mainImage: string,
+    image_url: string,
     images: string[],
-    manufacturer: IManufacturer
+    manufacturer?: IManufacturer
 }
 
 export default IProduct;

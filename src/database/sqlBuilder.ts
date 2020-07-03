@@ -11,19 +11,24 @@ export const insert = async (table: string, data: {}) => {
 
 interface ISelectOptions {
     fields: [],
-    conditions: [[string, string, any]],
+    conditions?: [[string, string, any]],
+    orConditions?: [[string, string, any]],
+    andConditions?: [[string, string, any]],
+    inConditions?: [[string, any]],
     joins?: [[string, string, any]],
+    leftJoins?: [[string, string, any]],
+    rightJoins?: [[string, string, any]],
     pagination?: { limit: number, offset: number }
 }
 export const select = async (table: string, options: ISelectOptions) => {
-    const { fields, conditions, joins, pagination } = options;
+    const { fields, conditions, orConditions, andConditions, inConditions, joins, leftJoins, rightJoins, pagination } = options;
     const selected_fields = fields.length > 0 ? fields : '*'
 
     var query = connection(table)
         .distinct()
         .select(selected_fields)
         .where(builder => {
-            conditions.forEach(condition => {
+            conditions?.forEach(condition => {
                 builder.orWhere(...condition)
             })  
         })
@@ -31,6 +36,32 @@ export const select = async (table: string, options: ISelectOptions) => {
     joins?.forEach(join => {
         query.join(...join)
     });
+
+    leftJoins?.forEach(join => {
+        query.leftJoin(...join)
+    });
+
+    rightJoins?.forEach(join => {
+        query.rightJoin(...join)
+    });
+
+    if (andConditions)
+        query.where(builder => {
+            andConditions.forEach(condition => {
+                builder.andWhere(...condition)
+            })  
+        })
+
+    if (orConditions)
+        query.where(builder => {
+            orConditions.forEach(condition => {
+                builder.orWhere(...condition)
+            })  
+        })
+    
+    inConditions?.forEach(whereIn => {
+        query.whereIn(...whereIn)
+    })
 
     if (pagination)
         query.limit(pagination.limit).offset(pagination.offset)
@@ -43,13 +74,13 @@ export const select = async (table: string, options: ISelectOptions) => {
 }
 
 export const count = async (table: string, options: ISelectOptions) => {
-    const { conditions, joins } = options;
-
+    const { conditions, orConditions, andConditions, joins, leftJoins, rightJoins } = options;
+    
     var query = connection(table)
         .distinct()
         .count(`${table}.id`, { as: 'count' })
         .where(builder => {
-            conditions.forEach(condition => {
+            conditions?.forEach(condition => {
                 builder.orWhere(...condition)
             })  
         });
@@ -57,6 +88,28 @@ export const count = async (table: string, options: ISelectOptions) => {
     joins?.forEach(join => {
         query.join(...join)
     });
+
+    leftJoins?.forEach(join => {
+        query.leftJoin(...join)
+    });
+
+    rightJoins?.forEach(join => {
+        query.rightJoin(...join)
+    });
+
+    if (andConditions)
+        query.where(builder => {
+            andConditions.forEach(condition => {
+                builder.andWhere(...condition)
+            })  
+        })
+
+    if (orConditions)
+        query.where(builder => {
+            orConditions.forEach(condition => {
+                builder.orWhere(...condition)
+            })  
+        })
     
     try {
         return await query;
@@ -102,19 +155,36 @@ export const remove = async (table: string, options: IRemoveOptions) => {
         throw err;
     }
 }
+export const confirmRemove = async (table: string, options: IRemoveOptions) => {
+    const { conditions } = options;
 
-export const buildConditions = (options: { filter: { }}) => {
-    const { filter } = options;
+    try {
+        return await connection(table)
+            .where(builder => {
+                conditions.forEach(condition => {
+                    builder.where(...condition)
+                })
+            })
+            .del()
+    } catch(err) {
+        throw err;
+    }
+}
+
+export const buildConditions = (options: { filter: { }, table?: string}) => {
+    const { filter, table } = options;
 
     const conditions = [];
-    for (var [key, v] of Object.entries(filter)){
+    for (var [k, v] of Object.entries(filter)){
+        const key = table !== undefined ? `${table}.${k}` : k;
         const value : any = v
         if (!isNaN(value) && Number(value) !== 0)
             conditions.push([`${key}`, '=', Number(value)])
 
         if(value !== '')
             conditions.push([`${key}`, 'LIKE', `%${value}%`])
+
     }
 
-    return conditions;
+    return conditions as [[string, string, any]];
 }

@@ -1,6 +1,4 @@
 import database from '../database/connection';
-import ICategory from '../interface/ICategory';
-import { SERVER_IP } from '../config/info';
 import { buildConditions, select, count, insert, update, remove } from '../database/sqlBuilder';
 
 class CategoryService {
