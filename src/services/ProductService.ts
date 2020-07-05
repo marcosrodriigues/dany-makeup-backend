@@ -66,7 +66,7 @@ class ProductService {
 
     async findOne(id: number) {
         if (!id) throw "Product not provided"
-        console.log(id);
+
         try {
             const product = (await select('products', {
                 fields: [],

@@ -1,6 +1,6 @@
 import ProductService from "../services/ProductService";
 import { Request, Response } from "express";
-import ProductImagesService from "../services/ProductImagesService";
+import ProductImagesService from "../services/ImageService";
 import FileService from "../services/FileService";
 
 const service = new ProductService();
@@ -213,7 +213,10 @@ class ProductController {
         } = request.query;
 
         try {
-            const products = await service.findByCategoryAndSearch(Number(category_id), String(search));
+            const products = await service.findByCategoryAndSearch({
+                category_id: Number(category_id),
+                search: String(search)
+            });
             return response.json(products);
         } catch (err) {
             console.log(err);

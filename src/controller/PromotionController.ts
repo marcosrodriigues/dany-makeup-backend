@@ -3,10 +3,9 @@ import FileService from "../services/FileService";
 import ProductService from "../services/ProductService";
 import PromotionService from "../services/PromotionService";
 import PromotionImagesService from "../services/PromotionImagesService";
-import ProductImagesService from "../services/ProductImagesService";
+import ProductImagesService from "../services/ImageService";
 
 const fileService = new FileService();
-const productService = new ProductService();
 const service = new PromotionService();
 const promotionImagesService = new PromotionImagesService();
 const productImagesService = new ProductImagesService();
@@ -56,52 +55,43 @@ class PromotionController {
 
     async store(request: Request, response: Response) {
         const {
-            name,
-            start,
-            end,
-            originalValue,
-            discountType,
-            discount,
-            promotionValue,
-            mainImage,
+            promotion,
             products,
             images
         } = request.body;
-
         const { files } = request;
+        if (!files && images.length === 0) return response.status(400).json({ error: 'No files provided' });
 
-        if (!files) {
-            console.log("no files provided");
-            return response.status(400).json({ error: 'No files provided' });
-        }
+        const objPromotion = JSON.parse(promotion);
 
-        let serializedFiles = images;
-        let mainImageNew = mainImage;
-
+        let serialized = images;
+        let final_image_url = objPromotion.image_url;
+        
         for (let i = 0; i < files.length; i++) {
-            if (files[i].originalname == mainImageNew) 
-               mainImageNew = fileService.serializeImageUrl(files[i].filename, 'promotions');
+            if (files[i].originalname == final_image_url) 
+                final_image_url = fileService.serializeImageUrl(files[i].filename, 'promotions');
 
-           serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
+            serialized.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
         }
 
-        const db_prod = await productService.findInIdsWithoutFilter(products.split(','));
+        const finalPromotion = {
+            name: objPromotion.name,
+            start: objPromotion.start,
+            end: objPromotion.end,
+            originalValue: objPromotion.originalValue,
+            promotionValue: objPromotion.promotionValue,
+            discount: objPromotion.discount,
+            discountType: objPromotion.discountType,
+            image_url: final_image_url
+        }
 
         try {
-            await service.store({
-                name,
-                start,
-                end,
-                originalValue,
-                discountType,
-                discount,
-                promotionValue,
-                mainImage: mainImageNew,
-                products: db_prod,
-                images: serializedFiles
+            await service.store({ 
+                promotion: finalPromotion,
+                products: products,
+                images: serialized
             });
-
-            return response.json({message: 'success'});
+           return response.json({message: 'success'});
         } catch (err) {
             console.log('Error PROMOTION CONTROLLER STORE', err)
             return response.status(400).json({ error: err })   
@@ -110,60 +100,45 @@ class PromotionController {
 
     async update(request: Request, response: Response) {
         const {
-            id,
-            name,
-            start,
-            end,
-            originalValue,
-            discountType,
-            discount,
-            promotionValue,
-            mainImage,
+            promotion,
             products,
             images
         } = request.body;
 
         const { files } = request;
-
-        if (!files && mainImage === "" && images.length === 0) {
-            console.log("no files provided");
-            return response.status(400).json({ error: 'No files provided' });
-        }
-
+        if (!files && images.length === 0) return response.status(400).json({ error: 'No files provided' });
         
-        let serializedFiles = images;
-        let mainImageNew = mainImage;
+        const objPromotion = JSON.parse(promotion);
+
+        let serialized = images;
+        let final_image_url = objPromotion.image_url;
 
         if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
-                if (files[i].originalname == mainImageNew) 
-                    mainImageNew = fileService.serializeImageUrl(files[i].filename, 'promotions');
+                if (files[i].originalname == final_image_url) 
+                    final_image_url = fileService.serializeImageUrl(files[i].filename, 'promotions');
 
-                serializedFiles.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
+                serialized.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
             }
         }
+
+        const finalPromotion = {
+            id: objPromotion.id,
+            name: objPromotion.name,
+            start: objPromotion.start,
+            end: objPromotion.end,
+            originalValue: objPromotion.originalValue,
+            promotionValue: objPromotion.promotionValue,
+            discount: objPromotion.discount,
+            discountType: objPromotion.discountType,
+            image_url: final_image_url
+        }
+
         try {
-            const database_files = await promotionImagesService.findByPromotion(Number(id));
-            database_files.map(async db => {
-                const fileFromProduct = await productImagesService.existsByUrl(db.url)
-                if (fileFromProduct === false)
-                    fileService.remove(db.url)
-            })
-
-            const db_prod = await productService.findInIdsWithoutFilter(products.split(','));
-
             await service.update({
-                id,
-                name,
-                start,
-                end,
-                originalValue,
-                discountType,
-                discount,
-                promotionValue,
-                mainImage: mainImageNew,
-                products: db_prod,
-                images: serializedFiles
+                promotion: finalPromotion,
+                images,
+                products
             });
 
             return response.json({message: 'success'});

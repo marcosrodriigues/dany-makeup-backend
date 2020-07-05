@@ -1,6 +1,6 @@
 import { select } from '../database/sqlBuilder';
 
-class ProductImagesService {
+class ImagesService {
     async findByProduct(id: number) {
         const options: any = {
             fields: ['images.*'],
@@ -33,6 +33,24 @@ class ProductImagesService {
             throw err;
         }
     }
+
+    async findByPromotion(id: number) {
+        const options: any = {
+            fields: ['images.*'],
+            joins: [
+                ['images', 'images.id', 'promotion_images.image_id']
+            ],
+            conditions: [
+                ['promotion_images.promotion_id', '=', id]
+            ]
+        }
+        try {
+            const images = await select('promotion_images', options)
+            return images;
+        } catch (err) {
+            throw err;
+        }
+    }
 }
 
-export default ProductImagesService;
+export default ImagesService;

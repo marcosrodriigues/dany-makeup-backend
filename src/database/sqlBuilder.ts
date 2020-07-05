@@ -22,7 +22,7 @@ interface ISelectOptions {
 }
 export const select = async (table: string, options: ISelectOptions) => {
     const { fields, conditions, orConditions, andConditions, inConditions, joins, leftJoins, rightJoins, pagination } = options;
-    const selected_fields = fields.length > 0 ? fields : '*'
+    const selected_fields = fields.length > 0 ? fields : `${table}.*`
 
     var query = connection(table)
         .distinct()
@@ -78,7 +78,7 @@ export const count = async (table: string, options: ISelectOptions) => {
     
     var query = connection(table)
         .distinct()
-        .count(`${table}.id`, { as: 'count' })
+        .countDistinct(`${table}.id`, { as: 'count' })
         .where(builder => {
             conditions?.forEach(condition => {
                 builder.orWhere(...condition)
@@ -171,7 +171,7 @@ export const confirmRemove = async (table: string, options: IRemoveOptions) => {
     }
 }
 
-export const buildConditions = (options: { filter: { }}, parentKey = '') => {
+export const buildConditions = (options: { filter: { }}, parentKey = ''): [[string, string, any]] => {
     const { filter } = options;
 
     const conditions = [];
@@ -180,7 +180,9 @@ export const buildConditions = (options: { filter: { }}, parentKey = '') => {
         const isObject = typeof(v) === 'object';
 
         if (isObject) {
-            buildConditions({ filter: Object(v) }, k)
+            const cond = buildConditions({ filter: Object(v) }, k)[0];
+            if (cond !== undefined)
+                conditions.push(cond);
         } else {
             const key = parentKey !== '' ? `${parentKey}.${k}` : k;
 

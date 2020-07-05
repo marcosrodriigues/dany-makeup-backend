@@ -1,8 +1,7 @@
 import database from '../database/connection';
-import IPromotion from '../interface/IPromotion'
 import connection from '../database/connection';
 import { convertToDatabaseDate } from '../util/util';
-import { buildConditions, select, count } from '../database/sqlBuilder';
+import { buildConditions, select, count, insert, update, confirmRemove } from '../database/sqlBuilder';
 
 class PromotionService {
 
@@ -17,6 +16,8 @@ class PromotionService {
             ['promotion_product' ,'promotion_product.promotion_id', 'promotions.id'],
             ['products', 'products.id', 'promotion_product.product_id']
         ]
+
+        console.log('filtr', filter,'or', orConditions);
 
         const options: any = {
             fields: [],
@@ -40,6 +41,7 @@ class PromotionService {
                         ['promotion_product.promotion_id', '=', promotion.id]
                     ]
                 });
+
                 return { promotion, products }
             }));
 
@@ -59,71 +61,35 @@ class PromotionService {
         }
     }
 
-    async findAll(input = "", limit = 5, offset = 0) {
-        try {
-            const query = database('promotions')
-                .leftJoin('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
-                .leftJoin('products', 'products.id', 'promotion_product.product_id')
-                .where('promotions.removed', false)
-                .distinct()
-                .select('promotions.*')
-
-            const queryCount = database('promotions')
-                .leftJoin('promotion_product', 'promotion_product.promotion_id', 'promotions.id')
-                .leftJoin('products', 'products.id', 'promotion_product.product_id')
-                .where('promotions.removed', false)
-                .distinct()
-                .countDistinct('promotions.id', { as: 'count' })
-
-            if (input !== "") {
-                query.andWhere(function () {
-                    this.where('promotions.name', 'like', `%${input}%`)
-                    .orWhere('products.name', 'like', `%${input}%`)
-                });
-                queryCount.andWhere(function () {
-                    this.where('promotions.name', 'like', `%${input}%`)
-                    .orWhere('products.name', 'like', `%${input}%`)
-                });
-            }
-
-            query.limit(limit).offset(offset);
-            const filtered = await query;
-            const counter = await queryCount;
-            
-            const promotions = await Promise.all(filtered
-                .map(async promotion => {
-                    const products = await database('products')
-                        .join('promotion_product', 'promotion_product.product_id', 'products.id')
-                        .where('promotion_product.promotion_id', promotion.id)
-                        .distinct()
-                        .select('products.*');
-
-                    return {promotion, products}
-                }));
-
-            return { promotions, count: counter[0].count }
-
-        } catch (err) {
-            console.log(err);
-            throw err;
-        }
-    }
-
     async findOne(id: number) {
+        if (id === 0) throw "Promotion not provided"
         try {
-            const promotion = await connection('promotions').where('id', id).select('*').first();
+            const promotion = (await select('promotions', {
+                fields: [],
+                conditions: [
+                    ['id', '=', id]
+                ]
+            }))[0]
 
-            const products = await connection('products')
-                            .join('promotion_product', 'promotion_product.product_id', 'products.id')
-                            .where('promotion_product.promotion_id', promotion.id)
-                            .distinct()
-                            .select('products.*');
+            const products = await select('products', {
+                fields: [],
+                joins:[
+                    ['promotion_product', 'promotion_product.product_id', 'products.id']
+                ],
+                conditions: [
+                    ['promotion_product.promotion_id', '=', promotion.id]
+                ]
+            })
 
-            const images = await connection('promotion_images')
-                            .join('promotions', 'promotion_images.promotion_id', 'promotions.id')
-                            .where('promotion_images.promotion_id', promotion.id)
-                            .distinct()
-                            .select('promotion_images.*');
+            const images = await select('images', {
+                fields: [],
+                joins: [
+                    ['promotion_images', 'promotion_images.image_id', 'images.id']
+                ],
+                conditions: [
+                    ['promotion_images.promotion_id', '=', promotion.id]
+                ]
+            })
 
             return {promotion, products, images};
         } catch (err) {
@@ -131,94 +97,86 @@ class PromotionService {
         }
     }
 
-    async store(promotion: IPromotion) {
+    async store(data = { promotion: {}, products: [], images: []}) {
+        const { promotion, products, images } = data;
+
+        promotion.start = convertToDatabaseDate(promotion.start)
+        promotion.end = convertToDatabaseDate(promotion.end);
+
         try {
-            const trx = await connection.transaction();
+            const id = await insert('promotions', promotion);
 
-            const id = await trx('promotions').insert({
-                name: promotion.name,
-                start: convertToDatabaseDate(promotion.start),
-                end: convertToDatabaseDate(promotion.end),
-                originalValue: promotion.originalValue,
-                discountType: promotion.discountType,
-                discount: promotion.discount,
-                promotionValue: promotion.promotionValue,
-                mainImage: promotion.mainImage,
-            });
+            images.map(async img => {
+                const obj = { url: img };
+                const img_id = await insert('images', obj);
 
-            const images = promotion.images
-                .map(img => {
-                    return {
-                        promotion_id: id,
-                        url: img
+                const pi = {
+                    image_id: img_id,
+                    promotion_id: id[0]
+                }
+                await insert('promotion_images', pi);
+            })
+
+            products.split(',').map(async prod_id => {
+                    const pp = {
+                        product_id: prod_id,
+                        promotion_id: id[0]
                     }
-                })
 
-            await trx('promotion_images').insert(images);
-
-            const promotion_products = promotion.products
-                .map(prod => {
-                    return {
-                        product_id: prod.id,
-                        promotion_id: id
-                    }
+                    await insert('promotion_product', pp);
                 });
-
-            await trx('promotion_product').insert(promotion_products);
-
-            await trx.commit();
-
-            const inserted = await connection('promotions').where('id','=',id).select('*').first();
-            return inserted;
         } catch (err) {
             throw err;
         }
+        return;
     }
 
-    async update(promotion: IPromotion) {
+    async update(data = { promotion: {}, products: [], images: []}) {
+        const { promotion, products, images } = data;
         if (!promotion.id) throw "No promotion provided";
 
+        promotion.start = convertToDatabaseDate(promotion.start)
+        promotion.end = convertToDatabaseDate(promotion.end);
+
         try {
-            const trx = await connection.transaction();
+            await update('promotions', {
+                data: promotion,
+                conditions: [
+                    ['id', '=', promotion.id]
+                ]
+            });
+            await confirmRemove('promotion_images', {
+                conditions: [
+                    ['promotion_id', '=', promotion.id]
+                ]
+            });
+            await confirmRemove('promotion_product', {
+                conditions: [
+                    ['promotion_id', '=', promotion.id]
+                ]
+            });
 
-            await trx('promotion_images').where('promotion_id', promotion.id).delete();
-            await trx('promotion_product').where('promotion_id', promotion.id).delete();
 
-            await trx('promotions').where('id', promotion.id).update({
-                name: promotion.name,
-                start: convertToDatabaseDate(promotion.start),
-                end: convertToDatabaseDate(promotion.end),
-                originalValue: promotion.originalValue,
-                discountType: promotion.discountType,
-                discount: promotion.discount,
-                promotionValue: promotion.promotionValue,
-                mainImage: promotion.mainImage,
+            images.map(async img => {
+                const obj = { url: img };
+                const img_id = await insert('images', obj);
+
+                const pi = {
+                    image_id: img_id,
+                    promotion_id: promotion.id
+                }
+                await insert('promotion_images', pi);
             })
 
-            const images = promotion.images
-                .map(img => {
-                    return {
-                        promotion_id: promotion.id,
-                        url: img
-                    }
-                })
+            products.split(',').map(async prod_id => {
+                const pp = {
+                    product_id: prod_id,
+                    promotion_id: promotion.id
+                }
 
-            const promotion_products = promotion.products
-                .map(prod => {
-                    return {
-                        product_id: prod.id,
-                        promotion_id: promotion.id
-                    }
-                });
-
-            await trx('promotion_images').insert(images);
-            await trx('promotion_product').insert(promotion_products);
-            await trx.commit();
-
-            const updated = this.findOne(promotion.id);
-            return updated;
+                await insert('promotion_product', pp);
+            });
         } catch (err) {
-            console.log(err)
             throw err;
         }
     }
