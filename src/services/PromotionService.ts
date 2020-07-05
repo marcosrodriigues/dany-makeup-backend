@@ -2,8 +2,52 @@ import database from '../database/connection';
 import IPromotion from '../interface/IPromotion'
 import connection from '../database/connection';
 import { convertToDatabaseDate } from '../util/util';
+import { buildConditions, select, count } from '../database/sqlBuilder';
 
 class PromotionService {
+
+    async find(params = { filter: {}, pagination: {} }) {
+        const { filter, pagination } = params;
+
+        const conditions = [
+            ['promotions.removed', '=', false]
+        ];
+        const orConditions = buildConditions({filter});
+        const leftJoins = [
+            ['promotion_product' ,'promotion_product.promotion_id', 'promotions.id'],
+            ['products', 'products.id', 'promotion_product.product_id']
+        ]
+
+        const options: any = {
+            fields: [],
+            conditions,
+            orConditions,
+            leftJoins,
+            pagination
+        }
+
+        try {
+            const result = await select('promotions', options);
+            const counter = await count('promotions', options);
+
+            const promotions = await Promise.all(result.map(async promotion => {
+                const products = await select('products', {
+                    fields: [],
+                    joins: [
+                        ['promotion_product', 'promotion_product.product_id', 'products.id']
+                    ],
+                    conditions: [
+                        ['promotion_product.promotion_id', '=', promotion.id]
+                    ]
+                });
+                return { promotion, products }
+            }));
+
+            return { promotions, count: counter[0].count}
+        } catch (err) {
+            throw err;
+        }
+    } 
     async findWithoutFilter() {
         try {
             const all = await database('promotions')

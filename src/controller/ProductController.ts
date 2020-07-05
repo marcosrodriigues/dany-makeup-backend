@@ -19,9 +19,11 @@ class ProductController {
 
         const options = {
             filter: {
-                name: String(name),
-                short_description: String(name),
-                full_description: String(name)
+                products: {
+                    name: String(name),
+                    short_description: String(name),
+                    full_description: String(name)
+                }
             },
             pagination: {
                 limit,

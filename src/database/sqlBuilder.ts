@@ -171,20 +171,26 @@ export const confirmRemove = async (table: string, options: IRemoveOptions) => {
     }
 }
 
-export const buildConditions = (options: { filter: { }, table?: string}) => {
-    const { filter, table } = options;
+export const buildConditions = (options: { filter: { }}, parentKey = '') => {
+    const { filter } = options;
 
     const conditions = [];
-    for (var [k, v] of Object.entries(filter)){
-        const key = table !== undefined ? `${table}.${k}` : k;
-        const value : any = v
-        if (!isNaN(value) && Number(value) !== 0)
-            conditions.push([`${key}`, '=', Number(value)])
+    for (var obj of Object.entries(filter)){
+        const [k, v] = obj;
+        const isObject = typeof(v) === 'object';
 
-        if(value !== '')
-            conditions.push([`${key}`, 'LIKE', `%${value}%`])
+        if (isObject) {
+            buildConditions({ filter: Object(v) }, k)
+        } else {
+            const key = parentKey !== '' ? `${parentKey}.${k}` : k;
 
+            const value : any = v
+            if (!isNaN(value) && Number(value) !== 0)
+                conditions.push([`${key}`, '=', Number(value)])
+
+            if(value !== '')
+                conditions.push([`${key}`, 'LIKE', `%${value}%`])
+        }
     }
-
     return conditions as [[string, string, any]];
 }

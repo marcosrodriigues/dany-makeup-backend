@@ -21,14 +21,29 @@ class PromotionController {
 
         const offset = Number(limit) * (Number(page) - 1);
 
+        const options = {
+            filter: {
+                promotions: {
+                    name
+                },
+                products: {
+                    name
+                }
+            },
+            pagination: {
+                limit,
+                offset
+            }
+        }
+
         try {
-            const { promotions, count } = await service.findAll(String(name), Number(limit), offset);
+            const { promotions, count } = await service.find(options);
 
             response.setHeader("x-total-count", Number(count));
             response.setHeader("Access-Control-Expose-Headers", "x-total-count");
             return response.json(promotions);
         } catch (err) {
-            console.log("ERROR PROMOTION CONTROLLER - INDEX\n");
+            console.log("ERROR PROMOTION CONTROLLER - INDEX\n", err);
             return response.status(400).json({ error: err })   
         }
     }

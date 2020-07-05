@@ -9,7 +9,7 @@ class ProductService {
         const { filter, pagination } = params;  
 
         const conditions = [['products.removed', '=', false]];
-        const orConditions = buildConditions({ filter, table: "products" });
+        const orConditions = buildConditions({ filter });
         const joins = [['manufacturers', 'manufacturers.id', 'products.manufacturer_id']]
 
         const options: any = {
