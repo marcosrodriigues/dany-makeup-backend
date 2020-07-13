@@ -14,7 +14,7 @@ const controller = new UserControlloer();
 routes.get('/users', controller.index);
 routes.get('/users/:id', controller.show);
 routes.post('/users', controller.store);
-routes.put('/users', controller.update);
+routes.put('/users', uploads.single('avatar_image'), controller.update);
 routes.delete('/users', controller.delete);
 
 routes.post('/auth/login', controller.login);

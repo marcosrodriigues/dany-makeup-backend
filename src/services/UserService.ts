@@ -4,6 +4,8 @@ import { Request } from 'express';
 import AddressService from './AddressService';
 import connection from '../database/connection';
 import IAddress from '../interface/IAddress';
+import { update } from '../database/sqlBuilder';
+import { convertToDatabaseDate } from '../util/util';
 
 const crypt = new Crypto();
 
@@ -56,22 +58,20 @@ class UserService {
         return saved;
     }
 
-    async update(user :IUser, address: IAddress) {
+    async update(data = { user: {} as IUser }) {
+        const { user } = data;
         if (!user.id) throw "No user provided on update";
+        user.created_at = convertToDatabaseDate(new Date(user.created_at));
+
         try {
-            const trx = await connection.transaction();
+            await update('users', {
+                data: user,
+                conditions: [
+                    ['id', '=', user.id]
+                ]
+            });
 
-            await trx('users').update(user).where('id', user.id);
-            if (address.id) {
-                await trx('address').update({...address, user_id: user.id }).where('user_id', user.id);
-            } else {
-                await trx('address').insert({...address, user_id: user.id });
-            }
-
-            trx.commit();
-
-            const db_user = await this.findOne(user.id)
-            return db_user;
+            return { message: 'success' };
         } catch (err) {
             throw err;
         }

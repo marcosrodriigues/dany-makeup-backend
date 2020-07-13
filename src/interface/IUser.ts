@@ -3,9 +3,10 @@ interface IUser {
     name: string,
     email: string,
     password?: string,
-    image?: string,
+    avatar?: string,
     whatsapp?: string,
     fb_id?: string,
+    created_at: string,
 }
 
 export default IUser;

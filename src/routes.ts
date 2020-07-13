@@ -8,6 +8,8 @@ import products from './routes/products';
 import promotions from './routes/promotions';
 import banners from './routes/banners';
 import correios from './routes/correios';
+import users from './routes/users';
+import address from './routes/address';
 
 const routes = express.Router();
 
@@ -19,6 +21,8 @@ routes.use(products);
 routes.use(promotions);
 routes.use(banners);
 routes.use(correios);
+routes.use(users);
+routes.use(address)
 
 export default routes;
 

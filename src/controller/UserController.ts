@@ -72,7 +72,7 @@ class UserControlloer {
             name, 
             email, 
             password,
-            image,
+            avatar,
             fb_id,
             whatsapp
         } = request.body;
@@ -102,7 +102,7 @@ class UserControlloer {
                 name, 
                 email, 
                 password: password_encrypted,
-                image,
+                avatar,
                 fb_id,
                 whatsapp
             });
@@ -117,31 +117,39 @@ class UserControlloer {
     
     async update(request: Request, response: Response) { 
         const {
-            user,
-            address
+            data_user,
         } = request.body;
 
         const { file } = request;
+        const objUser = JSON.parse(data_user);
 
-        let { id, name, email, password, whatsapp, fb_id } = user;
-        const image = file ? fileService.serializeImageUrl(file.filename, 'users') : user.image;
-        
+        const avatar = file ? fileService.serializeImageUrl(file.filename, 'users') : objUser.avatar;
+
         try {
-            const current_user = await service.findOne(Number(id));
+            const current_user = await service.findOne(Number(objUser.id));
 
-            if (password !== current_user.user.password) password = await crypt.encrypt(password);
-            if (email !== current_user.user.email) {
-                const userByEmail = await service.findByEmail(email)
+            let password = objUser.password;
+
+            if (objUser.password !== current_user.user.password) 
+                password = await crypt.encrypt(password || "");
+
+            if (objUser.email !== current_user.user.email) {
+                const userByEmail = await service.findByEmail(objUser.email)
 
                 if (userByEmail) throw "Email já utilizado!"
             }
 
-            const user_updated = await service.update({
-                id, name, email, whatsapp, password, image, fb_id
-            }, address);
+            const user = {
+                ...objUser,
+                password,
+                avatar
+            }
 
-            return response.json(user_updated);
+            await service.update({ user });
+
+            return response.json({ message: 'success' });
         } catch (error) {
+            console.log('ERROR UPDATE USER', error)
             return response.status(400).json({ error: 'Unable to update the user: ' + error });
         }
         
