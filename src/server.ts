@@ -10,6 +10,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+app.use(dotenv)
 
 app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
 app.use(routes);

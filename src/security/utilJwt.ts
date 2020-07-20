@@ -1,11 +1,12 @@
 import jwt from 'jsonwebtoken';
 const { promisify } = require('util');
 
-const SECRET = "[__dany_makeup_jwt_secret__]";
+const SECRET = process.env.JSON_WEBTOKEN_SECRET;
+const EXPIRES_IN = Number(process.env.JSON_WEBTOKEN_EXPIRES_IN);
 
 class UtilJwt {
     async generateToken(id: number) {
-        return await jwt.sign({ id }, SECRET, { expiresIn: 86400 });
+        return await jwt.sign({ id }, SECRET, { expiresIn: EXPIRES_IN });
     }
 
     async decode(token: string) {

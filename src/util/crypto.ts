@@ -1,6 +1,6 @@
 import bcryptjs from 'bcryptjs'
 
-const salt = 10;
+const salt = process.env.JSON_WEBTOKEN_SALT;
 
 class Crypto {
     async encrypt(text: string) {

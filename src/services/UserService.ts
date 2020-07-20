@@ -3,7 +3,6 @@ import Crypto from '../util/crypto';
 import { Request } from 'express';
 import AddressService from './AddressService';
 import connection from '../database/connection';
-import IAddress from '../interface/IAddress';
 import { update } from '../database/sqlBuilder';
 import { convertToDatabaseDate } from '../util/util';
 

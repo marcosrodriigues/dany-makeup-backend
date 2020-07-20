@@ -17,8 +17,6 @@ class PromotionService {
             ['products', 'products.id', 'promotion_product.product_id']
         ]
 
-        console.log('filtr', filter,'or', orConditions);
-
         const options: any = {
             fields: [],
             conditions,

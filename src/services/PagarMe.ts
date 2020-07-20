@@ -2,7 +2,7 @@ import pagarme from 'pagarme';
 
 import ICreditCard from '../interface/ICreditCard';
 
-const API_KEY = 'ak_test_qi5cuNNkLtcFANWJHW59wNYs5X2C4T';
+const API_KEY = process.env.PAGARME_API_KEY;
 
 class PagarMe {
     async generateHash(credit_card: ICreditCard, cliente = undefined) {

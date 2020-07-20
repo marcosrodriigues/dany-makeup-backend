@@ -1,22 +1,22 @@
 var soap = require('soap')
 
-const URL = "http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx?wsdl";
+const URL = process.env.CORREIOS_URL;
 
 var params = {
-    nCdEmpresa: '08082650',
-    sDsSenha: '564321',
-    nCdServico: '04014,04510',//,04782,04790,04804', //SEDEX, PAC, SEDEX 12, SEDEX 10, SEDEX HOJE
-    sCepOrigem: '27600000',
-    sCepDestino: '35400000',
-    nVlPeso: '1',
-    nCdFormato: 1,
-    nVlComprimento: 20.0,
-    nVlAltura: 20.0,
-    nVlLargura: 20.0,
-    nVlDiametro: 0.0,
-    sCdMaoPropria: 'n',
-    nVlValorDeclarado: 0.0,
-    sCdAvisoRecebimento: 'n',
+    nCdEmpresa: process.env.N_CD_EMPRESA,
+    sDsSenha: process.env.S_DS_SENHA,
+    nCdServico: process.env.N_CD_SERVICO,
+    sCepOrigem: process.env.S_CEP_ORIGEM,
+    sCepDestino: '00000000',
+    nVlPeso: process.env.N_VL_PESO,
+    nCdFormato: Number(process.env.N_CD_FORMATO),
+    nVlComprimento: Number(process.env.N_VL_COMPRIMENTO),
+    nVlAltura: Number(process.env.N_VL_ALTURA),
+    nVlLargura: Number(process.env.N_VL_LARGURA),
+    nVlDiametro: Number(process.env.N_VL_DIAMETRO),
+    sCdMaoPropria: process.env.N_VL_S_CD_MAO_PROPRIA,
+    nVlValorDeclarado: Number(process.env.N_VL_N_VL_VALOR_DECLARADO),
+    sCdAvisoRecebimento: process.env.S_CD_AVISO_RECEBIMENTO,
 }
 
 class CorreiosService {
