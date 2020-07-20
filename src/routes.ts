@@ -1,4 +1,5 @@
 import express from 'express';
+import './config/env';
 
 import stores from './routes/store';
 import manufacturers from './routes/manufacturer';
