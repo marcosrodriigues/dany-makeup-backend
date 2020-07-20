@@ -9,7 +9,7 @@ const crypt = new Crypto();
 const utilJwt = new UtilJwt();
 const fileService = new FileService();
 
-class UserControlloer {
+class UserController {
 
     async index(request: Request, response: Response) { 
         const {
@@ -158,16 +158,20 @@ class UserControlloer {
     async login(request: Request, response: Response) {
         const { email, password } = request.body;
 
-        const user = await service.login(email, password);
-
-        if (!user) return response.status(400).json({ error: 'Email or password invalid.'})
-        
-        const token = await utilJwt.generateToken(user.id);
-
-        return response.json({
-            user,
-            token
-        })
+        try {
+            const user = await service.login(email, password);
+    
+            if (!user) return response.status(400).json({ error: 'Email or password invalid.'})
+            
+            const token = await utilJwt.generateToken(user.id);
+    
+            return response.json({
+                user,
+                token
+            })
+        } catch (error) {
+            return response.status(401).json({ error })
+        }
 
     }
 
@@ -186,4 +190,4 @@ class UserControlloer {
     }
 }
 
-export default UserControlloer
+export default UserController

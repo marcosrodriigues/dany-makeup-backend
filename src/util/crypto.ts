@@ -8,10 +8,15 @@ class Crypto {
         return encrypted;
     }
     async compare(password: string, encrypted: string) {
-        var equal = await bcryptjs.compare(password, encrypted).then(value => {
-            return value;
-        });
-        return equal;
+        try {
+            var equal = await bcryptjs.compare(password, encrypted).then(value => {
+                return value;
+            });
+            return equal;
+        } catch (err) {
+            throw err;
+        }
+        
     }
 }
 
