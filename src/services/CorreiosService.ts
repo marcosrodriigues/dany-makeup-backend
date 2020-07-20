@@ -14,8 +14,8 @@ var params = {
     nVlAltura: Number(process.env.N_VL_ALTURA),
     nVlLargura: Number(process.env.N_VL_LARGURA),
     nVlDiametro: Number(process.env.N_VL_DIAMETRO),
-    sCdMaoPropria: process.env.N_VL_S_CD_MAO_PROPRIA,
-    nVlValorDeclarado: Number(process.env.N_VL_N_VL_VALOR_DECLARADO),
+    sCdMaoPropria: process.env.S_CD_MAO_PROPRIA,
+    nVlValorDeclarado: Number(process.env.N_VL_VALOR_DECLARADO),
     sCdAvisoRecebimento: process.env.S_CD_AVISO_RECEBIMENTO,
 }
 
@@ -26,6 +26,7 @@ class CorreiosService {
             return await soap.createClient(URL, async(err: any, client: any) => {
                 if (err) throw err;
                 params.sCepDestino = cep;
+
                 return await client.CalcPrecoPrazo(params, function (err: any, result: any) {
                     if (err) throw err;
                     const servicos = result.CalcPrecoPrazoResult.Servicos.cServico;
