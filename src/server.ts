@@ -5,7 +5,6 @@ import path from 'path';
 import { errors } from 'celebrate';
 import dotenv from './config/env';
 
-
 const app = express();
 
 app.use(express.json());
