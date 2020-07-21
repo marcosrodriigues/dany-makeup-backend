@@ -1,5 +1,5 @@
 import connection from "../database/connection";
-import { insert, update, remove } from "../database/sqlBuilder";
+import { insert, update, remove, select } from "../database/sqlBuilder";
 import IAddress from "../interface/IAddress";
 
 class AddressService {
@@ -27,6 +27,25 @@ class AddressService {
             throw err;
         }
     }
+
+    async findOne(id: number) {
+        if (!id) throw "No address provided";
+
+        const options: any = {
+            fields: [],
+            conditions: [
+                ['id', '=', id]
+            ]
+        }
+
+        try {
+            const add = (await select('address', options))[0];
+            return add;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async findByUser(id: number) {
         if (!id) throw "Not user provided!";
         try {

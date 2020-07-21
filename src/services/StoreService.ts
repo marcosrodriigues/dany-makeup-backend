@@ -1,5 +1,8 @@
 import { insert, select, remove, update, count, buildConditions } from "../database/sqlBuilder";
 
+import AddressService from './AddressService';
+
+const addressService = new AddressService();
 class StoreService {
     async find(params = { filter: { }, pagination: {} }) {
         const { filter, pagination } = params;
@@ -40,6 +43,25 @@ class StoreService {
             throw err;
         }
     }
+
+    async findWithAddress() {
+
+        const options: any = {
+            fields: ['stores.*'],
+        }
+        try {
+            const result = await select('stores', options)
+            const stores = await Promise.all(result.map(async s => {
+                const address = await addressService.findOne(s.address_id)
+                s.address = address;
+                return s;
+            }));
+            return stores;
+        } catch (error) {
+            throw error;
+        }
+    }
+
 
     async store(data = { store: {}, address: {} }) { 
         const { store, address } = data;

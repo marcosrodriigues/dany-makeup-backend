@@ -14,5 +14,6 @@ routes.get('/stores/:id', controller.show)
 routes.post('/stores', uploads.single('image'), controller.store)
 routes.put('/stores', uploads.single('image'), controller.update)
 routes.delete('/stores/:id', controller.delete)
+routes.get('/mobile/stores', controller.mobile_store)
 
 export default routes;

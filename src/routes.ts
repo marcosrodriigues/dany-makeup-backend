@@ -12,6 +12,7 @@ import correios from './routes/correios';
 import users from './routes/users';
 import address from './routes/address';
 import creditcard from './routes/creditcard';
+import orders from './routes/order'
 
 const routes = express.Router();
 
@@ -26,6 +27,7 @@ routes.use(correios);
 routes.use(users);
 routes.use(address)
 routes.use(creditcard)
+routes.use(orders)
 
 export default routes;
 

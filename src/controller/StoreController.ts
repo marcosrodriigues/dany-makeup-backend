@@ -52,6 +52,18 @@ class StoreController {
          }
     }
 
+    async mobile_store(request: Request, response: Response) {
+        try {
+
+            const stores = await service.findWithAddress();
+
+            return response.json(stores);
+        } catch (error) {
+            console.log("erro index store controller", error)
+            return response.status(400).json({ error });
+        }
+    }
+
     async store (request: Request, response: Response) {
         const {
             name,
