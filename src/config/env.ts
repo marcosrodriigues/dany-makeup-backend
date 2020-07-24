@@ -7,7 +7,7 @@ const env_path = path.resolve(__dirname, '..', '..', 'env',
 )
 
 const dotenv = require('dotenv').config({
-    path: env_path
+    //path: env_path
 });
 
 export default dotenv;
