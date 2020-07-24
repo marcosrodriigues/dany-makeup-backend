@@ -16,6 +16,10 @@ import orders from './routes/order'
 
 const routes = express.Router();
 
+routes.get('/', (req, res) => {
+    return res.json({ message: 'Hello, DanyMakeUp! '})
+})
+
 routes.use(stores);
 routes.use(manufacturers);
 routes.use(categorys);
