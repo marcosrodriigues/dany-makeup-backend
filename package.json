@@ -10,7 +10,10 @@
     "prod": "NODE_ENV=production ts-node-dev src/server.ts",
     "knex:migrate": "knex --knexfile knexfile.ts migrate:latest",
     "knex:seed": "knex --knexfile ./knexfile.ts seed:run",
-    "start": "NODE_ENV=test ts-node-dev src/server.ts"
+    "start": "node src/server.ts"
+  },
+  "engines": {
+    "node": "12.18.0"
   },
   "keywords": [],
   "author": "",
