@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
 const { promisify } = require('util');
 
-const SECRET = process.env.JSON_WEBTOKEN_SECRET;
-const EXPIRES_IN = Number(process.env.JSON_WEBTOKEN_EXPIRES_IN);
+const SECRET = process.env.JSON_WEBTOKEN_SECRET || 'JSON_WEBTOKEN_SECRET';
+const EXPIRES_IN = Number(process.env.JSON_WEBTOKEN_EXPIRES_IN || 86400);
 
 class UtilJwt {
     async generateToken(id: number) {

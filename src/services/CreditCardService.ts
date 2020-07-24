@@ -6,14 +6,14 @@ import { insert, select, buildConditions, remove}  from '../database/sqlBuilder'
 const pagarMe = new PagarMe();
 
 class CreditCardService {
-    async save(data : { credit_card, user_id,  }) {
+    async save(data = { credit_card: {} as any, user_id: 0 as number,  }) {
         const { credit_card, user_id } = data;
 
         try {
             if (!(await this.verifyCreditCard(credit_card)))
                 throw "Cartão de crédito inválido";
 
-            const client = await pagarMe.connect();
+            const client = await pagarMe.connect() as any;
             const card_hash = await pagarMe.generateHash(credit_card, client);
             const pagarme_card = await pagarMe.generateCard(card_hash, client);
             const card = this.makeCard(pagarme_card);
@@ -69,8 +69,8 @@ class CreditCardService {
         return (await pagarMe.isCreditCardValid(credit_card));
     }
 
-    private makeCard(card_pagarme = undefined) {
-        if (!card_pagarme) return;
+    private makeCard(card_pagarme: any = undefined) {
+        if (card_pagarme === undefined) return;
         
         const card: any = {
             card_id: card_pagarme.id,

@@ -53,7 +53,7 @@ class BannerService {
         }
     }
 
-    async store(data = { banner: {} }) {
+    async store(data = { banner: {} as any }) {
         const { banner } = data;
         try {
             await insert('banners', {
@@ -67,7 +67,7 @@ class BannerService {
         }
     }
 
-    async update(data = { banner: {} }) {
+    async update(data = { banner: {} as any }) {
         const { banner } = data;
         
         try {

@@ -63,12 +63,13 @@ class ProductController {
             amounts
 
          } = request.body;
-         const { files } = request;
+         const { files } = request as any;
 
          if (!files) return response.status(400).json({ error: 'No files provided' });
 
          let final_image_url;
-         let images = []
+         let images = [] as string[];
+         
          for (let i = 0; i < files.length; i++) {
              if (files[i].originalname == image_url) 
                 final_image_url = fileService.serializeImageUrl(files[i].filename, 'products');
@@ -86,7 +87,7 @@ class ProductController {
             manufacturer_id
          }
 
-         const stocks = store_id.map((store, i) => {
+         const stocks = store_id.map((store: number, i: number) => {
              return {
                  store_id: store,
                  amount: amounts[i]
@@ -124,7 +125,7 @@ class ProductController {
             stock_id,
             amounts
          } = request.body;
-        const { files } = request;
+        const { files } = request as any;
 
         let images = url_images || [];
         let final_image_url = "";
@@ -154,7 +155,7 @@ class ProductController {
 
 
 
-         const stocks = stock_id.map((stock, i) => {
+         const stocks = stock_id.map((stock: number, i: number) => {
             return {
                 id: stock,
                 amount: amounts[i]

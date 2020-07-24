@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const SECRET = process.env.JSON_WEBTOKEN_SECRET;
 
-module.exports = async (req: Request, res: Response, next: NextFunction) => {
+module.exports = async (req: any, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader) {

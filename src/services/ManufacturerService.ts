@@ -51,7 +51,7 @@ class ManufacturerService {
         }
     }
 
-    async update(data = { manufacturer: {}}) {
+    async update(data = { manufacturer: {}as any}) {
         const { manufacturer } = data;
 
         try {

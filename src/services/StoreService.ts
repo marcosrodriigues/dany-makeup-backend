@@ -63,7 +63,7 @@ class StoreService {
     }
 
 
-    async store(data = { store: {}, address: {} }) { 
+    async store(data = { store : {} as any, address: {} }) { 
         const { store, address } = data;
 
         try {
@@ -76,7 +76,7 @@ class StoreService {
         }
     }
 
-    async update(data = { store: {}, address: {} }) {
+    async update(data = { store: { id: 0 as number}, address: { id : 0 as number} }) {
         const { store, address } = data;
 
         try {

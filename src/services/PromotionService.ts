@@ -95,7 +95,7 @@ class PromotionService {
         }
     }
 
-    async store(data = { promotion: {}, products: [], images: []}) {
+    async store(data = { promotion: {} as any, products: [] as any, images: []}) {
         const { promotion, products, images } = data;
 
         promotion.start = convertToDatabaseDate(promotion.start)
@@ -115,7 +115,7 @@ class PromotionService {
                 await insert('promotion_images', pi);
             })
 
-            products.split(',').map(async prod_id => {
+            products.split(',').map(async (prod_id: number) => {
                     const pp = {
                         product_id: prod_id,
                         promotion_id: id[0]
@@ -129,7 +129,7 @@ class PromotionService {
         return;
     }
 
-    async update(data = { promotion: {}, products: [], images: []}) {
+    async update(data = { promotion: {} as any, products: [] as any, images: []}) {
         const { promotion, products, images } = data;
         if (!promotion.id) throw "No promotion provided";
 
@@ -166,7 +166,7 @@ class PromotionService {
                 await insert('promotion_images', pi);
             })
 
-            products.split(',').map(async prod_id => {
+            products.split(',').map(async (prod_id: any) => {
                 const pp = {
                     product_id: prod_id,
                     promotion_id: promotion.id

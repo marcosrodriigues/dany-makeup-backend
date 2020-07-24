@@ -75,7 +75,7 @@ class ProductService {
                 ]
             }))[0];
 
-            const categorys = await select('categorys', {
+            const cat_opt: any = {
                 fields: ['categorys.*'],
                 joins: [
                     ['category_product', 'category_product.category_id', 'categorys.id']
@@ -83,9 +83,11 @@ class ProductService {
                 conditions: [
                     ['category_product.product_id', '=', product.id]
                 ]
-            })
+            }
 
-            const images = await select('product_images', {
+            const categorys = await select('categorys', cat_opt);
+
+            const img_opt: any = {
                 fields: ['images.url'],
                 joins: [
                     ['products', 'products.id', 'product_images.product_id'],
@@ -94,10 +96,11 @@ class ProductService {
                 conditions: [
                     ['product_images.product_id', '=', product.id]
                 ]
+            };
 
-            })
+            const images = await select('product_images', img_opt)
 
-            const stock = await select('store_product', {
+            const stock_opt : any = {
                 fields: ['store_product.*', 'stores.name'],
                 joins: [
                     ['stores', 'stores.id', 'store_product.store_id']
@@ -105,7 +108,9 @@ class ProductService {
                 conditions: [
                     ['store_product.product_id', '=', product.id]
                 ]
-            })
+            }
+
+            const stock = await select('store_product', stock_opt)
 
             return { product, categorys, images, stock };
         } catch (err) {
@@ -113,7 +118,7 @@ class ProductService {
         }
     }
 
-    async store(data = { product: {}, images: [], categorys: [], stocks: [] }) {
+    async store(data = { product: {}, images: [] as string[], categorys: [], stocks: [] }) {
         const { product, images, categorys, stocks } = data;
 
         try {
@@ -139,7 +144,7 @@ class ProductService {
                     await insert('category_product', cp)
                 })
 
-            stocks.map(async stock => {
+            stocks.map(async (stock: any) => {
                 const sp = {
                     product_id: id[0],
                     store_id: stock.store_id,
@@ -153,7 +158,7 @@ class ProductService {
         }
     }
 
-    async updates(data = { product: {}, images: [], categorys: [], stocks: [] }) {
+    async updates(data = { product: {} as any, images: [], categorys: [], stocks: [] }) {
         const { product, images, categorys, stocks } = data;
 
         try {
@@ -195,7 +200,7 @@ class ProductService {
                 })
 
 
-            stocks.map(async stock => {
+            stocks.map(async (stock: any) => {
                 const sp = {
                     id: stock.id,
                     amount: stock.amount

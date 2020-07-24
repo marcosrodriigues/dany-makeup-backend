@@ -52,7 +52,7 @@ class UserService {
         return user;
     }
 
-    async save(user: IUser) {
+    async save(user: any) {
         const saved = await connection('users').insert(user);
         return saved;
     }
@@ -92,7 +92,7 @@ class UserService {
 
     async findMe(request: Request) {
         try {
-            const { userId } = request;
+            const { userId } = request as any;
             const user = await this.findOne(userId);
             return user;
         } catch (err) {

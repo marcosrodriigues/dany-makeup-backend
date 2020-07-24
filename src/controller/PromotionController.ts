@@ -58,7 +58,7 @@ class PromotionController {
             products,
             images
         } = request.body;
-        const { files } = request;
+        const { files } = request as any;
         if (!files && images.length === 0) return response.status(400).json({ error: 'No files provided' });
 
         const objPromotion = JSON.parse(promotion);
@@ -105,7 +105,7 @@ class PromotionController {
             images
         } = request.body;
 
-        const { files } = request;
+        const { files } = request as any;
         if (!files && images.length === 0) return response.status(400).json({ error: 'No files provided' });
         
         const objPromotion = JSON.parse(promotion);

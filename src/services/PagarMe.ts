@@ -2,10 +2,10 @@ import pagarme from 'pagarme';
 
 import ICreditCard from '../interface/ICreditCard';
 
-const API_KEY = process.env.PAGARME_API_KEY;
+const API_KEY = process.env.PAGARME_API_KEY || '';
 
 class PagarMe {
-    async generateHash(credit_card: ICreditCard, cliente = undefined) {
+    async generateHash(credit_card: ICreditCard, cliente: any = undefined) {
         const card = this.makeCard(credit_card);
         try {
             const client = cliente || await this.connect();
@@ -15,7 +15,7 @@ class PagarMe {
             throw err;
         }
     }
-    async generateCard(card_hash = '', cliente = undefined) {
+    async generateCard(card_hash = '', cliente: any = undefined) {
         if (card_hash === '' || cliente === undefined) throw ":generateCardId: Parameter invalid"
         try {
             const client = cliente || await this.connect();
@@ -35,7 +35,7 @@ class PagarMe {
         try {
             const client = await pagarme.client.connect({
                 api_key: API_KEY
-            });
+            }) as any;
 
             return client;
         } catch (err) {

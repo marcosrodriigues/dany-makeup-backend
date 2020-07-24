@@ -53,7 +53,7 @@ class CategoryService {
         
     }
 
-    async update(data = { category: { } }) {
+    async update(data = { category: { } as any }) {
         const { category } = data;
         try {
             await update('categorys', {

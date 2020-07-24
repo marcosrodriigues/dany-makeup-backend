@@ -1,5 +1,8 @@
 declare module 'pagarme' {
-    export namespace client {
+
+  function validate(card: any): any;
+
+  export namespace client {
       function connect(authentication: {
         api_key: string;
       }): Promise<typeof client>;
@@ -335,7 +338,7 @@ declare module 'pagarme' {
         function find(a0: any, a1: any, ...args: any[]): any;
       }
     }
-  
+
     export interface Address {
       /** País. Duas letras minúsculas. Deve seguir o padrão `ISO 3166-1 alpha-2` */
       country: string;

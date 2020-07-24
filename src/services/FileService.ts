@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 
-const SERVER_IP = process.env.SERVER_URL;
+const SERVER_IP = process.env.SERVER_URL || '';
 
 class FileService {
     async remove(url:string) {
