@@ -1,13 +1,14 @@
 import path from 'path';
+import './src/config/env';
 
 module.exports = {
     client: 'mysql2',
     version: '5.7',
     connection: {
-        host: '127.0.0.1',
-        user: 'root',
-        password: 'mysql_123',
-        database: 'dany_makeup'
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_DATABASE
     },
     migrations: {
         directory: path.resolve(__dirname, 'src', 'database', 'migrations')
