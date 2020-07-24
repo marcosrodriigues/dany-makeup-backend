@@ -79,6 +79,10 @@ class PagarMe {
 
         return card;
     }
+
+    async makeTransaction() {
+        
+    }
 }
 
 export default PagarMe;

@@ -1,5 +1,6 @@
 import { Response, Request } from "express";
 import OrderService from "../services/OrderService";
+import { isOrderValid } from "../util/util";
 
 const service = new OrderService();
 
@@ -67,10 +68,21 @@ class OrderController {
     }
     async store(request: Request, response: Response) { 
         const { order } = request.body;
+        
+        /**
+         * order: user_id, final_value, delivery
+         * item: items list
+         * transactions: payment, final_value
+         */
 
-        console.log('body', order);0
+        try {
+            await service.store({ order });
+            return response.json({ message: 'success' })
+        } catch (error) {
+            console.log('error store order', error)
+            return response.status(400).json({ error });
+        }
 
-        return response.json(order.user);
     }
     async update(request: Request, response: Response) { }
     async delete(request: Request, response: Response) { }

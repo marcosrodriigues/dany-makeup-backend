@@ -4,7 +4,6 @@ export async function up(knex: Knex) {
     return knex.schema.createTable('transactions', table => {
         table.increments('id').primary();
         table.string('pagarme_id');//": 1828542,
-
         table.string('status');//": "paid",
         table.string('authorization_code');//": "421974",
         table.string('soft_descriptor');//": null,
@@ -15,13 +14,16 @@ export async function up(knex: Knex) {
         table.integer('amount');//": 21000,
         table.integer('authorized_amount');//": 21000,
         table.string('postback_url');//": null,
+        
+        table.string('payment_method');//": "credit_card",
+        table.string('capture_method');//": "ecommerce",
+        table.string('antifraud_score');//": null,
+
         table.string('card_holder_name');//": "Morpheus Fishburne",
         table.string('card_last_digits');//": "1111",
         table.string('card_first_digits');//": "411111",
         table.string('card_brand');//": "visa",
-        table.string('payment_method');//": "credit_card",
-        table.string('capture_method');//": "ecommerce",
-        table.string('antifraud_score');//": null,
+
         table.string('boleto_url');//": null,
         table.string('boleto_barcode');//": null,
         table.string('boleto_expiration_date');//": null,

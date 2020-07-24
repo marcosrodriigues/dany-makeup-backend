@@ -14,8 +14,11 @@ export async function up(knex: Knex) {
         table.integer('promotion_id').unsigned();
         table.integer('product_id').unsigned();
 
+        table.integer('order_id').unsigned().notNullable();
+
         table.foreign('promotion_id').references('promotions.id');
         table.foreign('product_id').references('products.id');
+        table.foreign('order_id').references('orders.id');
     }); 
 }
 

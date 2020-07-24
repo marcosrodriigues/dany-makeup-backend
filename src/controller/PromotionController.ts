@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import FileService from "../services/FileService";
-import ProductService from "../services/ProductService";
 import PromotionService from "../services/PromotionService";
 import PromotionImagesService from "../services/PromotionImagesService";
 import ProductImagesService from "../services/ImageService";
@@ -82,6 +81,7 @@ class PromotionController {
             promotionValue: objPromotion.promotionValue,
             discount: objPromotion.discount,
             discountType: objPromotion.discountType,
+            description: objPromotion.description || '',
             image_url: final_image_url
         }
 
@@ -123,14 +123,7 @@ class PromotionController {
         }
 
         const finalPromotion = {
-            id: objPromotion.id,
-            name: objPromotion.name,
-            start: objPromotion.start,
-            end: objPromotion.end,
-            originalValue: objPromotion.originalValue,
-            promotionValue: objPromotion.promotionValue,
-            discount: objPromotion.discount,
-            discountType: objPromotion.discountType,
+            ...objPromotion,
             image_url: final_image_url
         }
 
