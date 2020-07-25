@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.json());
 app.use(cors({
-    origin: 'https://manager.danymakeup.com.br'
+    origin: ['https://manager.danymakeup.com.br', 'http://localhost:3000']
 }));
 
 app.use('/uploads', express.static(path.resolve(__dirname, '..', 'uploads')));
