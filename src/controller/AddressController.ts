@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import AddressService from "../services/AddressService";
-import UserService from "../services/UserService";
 
 const service = new AddressService();
 

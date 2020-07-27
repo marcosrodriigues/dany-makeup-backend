@@ -73,7 +73,7 @@ class BannerController {
 
         if (!file) return response.status(400).json({error: 'No file provided!'});
 
-        const image_url = fileService.serializeImageUrl(file.filename, 'banners');
+        const image_url = await fileService.serializeImageUrl(file.filename, 'banners');
 
         const banner = {
             name,

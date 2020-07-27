@@ -56,7 +56,7 @@ class CategoryController {
 
         if (!file) return response.status(400).json({ error: "No image provided!" });
 
-        const image_url = fileService.serializeImageUrl(file.filename, 'categorys');
+        const image_url = await fileService.serializeImageUrl(file.filename, 'categorys');
 
         const category = {
             title,

@@ -74,7 +74,7 @@ class ProductController {
              if (files[i].originalname == image_url) 
                 final_image_url = fileService.serializeImageUrl(files[i].filename, 'products');
 
-            images.push(fileService.serializeImageUrl(files[i].filename, 'products'));
+            images.push(await fileService.serializeImageUrl(files[i].filename, 'products'));
          }
 
          const product = {
@@ -145,7 +145,7 @@ class ProductController {
          if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 if (files[i].originalname == image_url) 
-                    final_image_url = fileService.serializeImageUrl(files[i].filename, 'products');
+                    final_image_url = await fileService.serializeImageUrl(files[i].filename, 'products');
    
                 images.push(fileService.serializeImageUrl(files[i].filename, 'products'))
             }
