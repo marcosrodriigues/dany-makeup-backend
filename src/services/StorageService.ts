@@ -14,7 +14,21 @@ class StorageService {
         } catch(error) {
             throw error;
         }
-        
+    }
+
+    async delete(file: string) {
+        try {
+            const filename = this.filename(file);
+            const id = filename.split('.')[0];
+            await cloudinary.v2.uploader.destroy(id);
+            return true;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    filename(url: string) {
+        return String(url).substring(String(url).lastIndexOf('/') + 1, url.length) 
     }
 }
 

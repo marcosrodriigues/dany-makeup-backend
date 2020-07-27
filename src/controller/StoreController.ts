@@ -83,7 +83,7 @@ class StoreController {
         const { file } = request;
 
         if (!file) return response.status(400).json({ error: "No image provided!" });
-        const image_url = fileService.serializeImageUrl(file.filename, 'stores');
+        const image_url = await fileService.serializeImageUrl(file.filename, 'stores');
 
         const address = {
             name: address_name,
@@ -131,7 +131,7 @@ class StoreController {
 
         let store: any = { id, name, description, image_url };
         
-        store = fileService.deleteFileAndSerializeNewFile(file, service, store, 'stores')
+        store = await fileService.deleteFileAndSerializeNewFile(file, service, store, 'stores')
 
         const address = {
             id: address_id,

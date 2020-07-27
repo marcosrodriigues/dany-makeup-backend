@@ -8,15 +8,8 @@ import StorageService from './StorageService';
 const storage = new StorageService();
 class FileService {
     async remove(url:string) {
-        if (!url.startsWith(SERVER_IP)) throw "Image not available";
-        
-        const filename = this.getFilename(url);
-        const folder = this.getFolder(url);
-
-        const pathfile = path.resolve(__dirname, '..', '..', 'uploads', folder, filename);
-
         try {
-            fs.unlinkSync(pathfile);
+            await storage.delete(url);
             return true;
         } catch (err) {
             throw err;
@@ -24,10 +17,7 @@ class FileService {
     }
 
     getFilename(url: string) {
-        if (url.startsWith(SERVER_IP)) {
-            return String(url).substring(String(url).lastIndexOf('/') + 1, url.length) 
-        }
-        return url;
+        return String(url).substring(String(url).lastIndexOf('/') + 1, url.length) 
     }
 
     getFolder(url: string) {
@@ -38,7 +28,7 @@ class FileService {
         return url;
     }
 
-    serializeImageUrl(filename: string, folder: string) {
+    async serializeImageUrl(filename: string, folder: string) {
         const pathfile = path.resolve(__dirname, '..', '..', 'uploads', folder, filename);
         const url = this.upload(pathfile);
         return url;
@@ -46,10 +36,11 @@ class FileService {
 
     async upload(file: string) {
         try {
-            const url = storage.store(file);
+            const url = await storage.store(file);
             return url;
         } catch(err) {
             console.log('error', err);
+            throw err;
         }
     }
 
@@ -64,11 +55,11 @@ class FileService {
 
     async deleteFileAndSerializeNewFile(file: any, service: any, data: { id: number, image_url?: string }, folder: string) {
         if (file) {
-            this.deleteFile(service, data.id)   
+            await this.deleteFile(service, data.id)   
 
             data = {
                 ...data,
-                image_url: this.serializeImageUrl(file.filename, folder)
+                image_url: await this.serializeImageUrl(file.filename, folder)
             }
         }
 
