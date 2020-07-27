@@ -3,6 +3,9 @@ import fs from 'fs';
 
 const SERVER_IP = process.env.SERVER_URL || '';
 
+import StorageService from './StorageService';
+
+const storage = new StorageService();
 class FileService {
     async remove(url:string) {
         if (!url.startsWith(SERVER_IP)) throw "Image not available";
@@ -29,14 +32,25 @@ class FileService {
 
     getFolder(url: string) {
         if (url.startsWith(SERVER_IP)) {
-            const splited = url.split('/uploads/')[1];
-            return splited.substring(0, splited.indexOf('/'));
+            const split = url.split('/uploads/')[1];
+            return split.substring(0, split.indexOf('/'));
         }
         return url;
     }
 
     serializeImageUrl(filename: string, folder: string) {
-        return `${SERVER_IP}/uploads/${folder}/${filename}`
+        const pathfile = path.resolve(__dirname, '..', '..', 'uploads', folder, filename);
+        const url = this.upload(pathfile);
+        return url;
+    }
+
+    async upload(file: string) {
+        try {
+            const url = storage.store(file);
+            return url;
+        } catch(err) {
+            console.log('error', err);
+        }
     }
 
     async deleteFile(service: any, id: number) {
@@ -48,7 +62,7 @@ class FileService {
         }
     }
 
-    async deleteFileAndSerializeNewFile(file: Express.Multer.File, service: any, data: { id: number, image_url?: string }, folder: string) {
+    async deleteFileAndSerializeNewFile(file: any, service: any, data: { id: number, image_url?: string }, folder: string) {
         if (file) {
             this.deleteFile(service, data.id)   
 
