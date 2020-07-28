@@ -1,7 +1,4 @@
 import path from 'path';
-import fs from 'fs';
-
-const SERVER_IP = process.env.SERVER_URL || '';
 
 import StorageService from './StorageService';
 
@@ -21,11 +18,8 @@ class FileService {
     }
 
     getFolder(url: string) {
-        if (url.startsWith(SERVER_IP)) {
-            const split = url.split('/uploads/')[1];
-            return split.substring(0, split.indexOf('/'));
-        }
-        return url;
+        const split = url.split('/uploads/')[1];
+        return split.substring(0, split.indexOf('/'));
     }
 
     async serializeImageUrl(filename: string, folder: string) {
@@ -36,7 +30,7 @@ class FileService {
 
     async upload(file: string) {
         try {
-            const url = await storage.store(file);
+            const url = await storage.store(file, this.getFolder(file));
             return url;
         } catch(err) {
             console.log('error', err);
