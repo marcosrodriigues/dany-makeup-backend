@@ -123,7 +123,7 @@ class UserController {
         const { file } = request;
         const objUser = JSON.parse(data_user);
 
-        const avatar = file ? fileService.serializeImageUrl(file.filename, 'users') : objUser.avatar;
+        const avatar = file ? await fileService.serializeImageUrl(file.filename, 'users') : objUser.avatar;
 
         try {
             const current_user = await service.findOne(Number(objUser.id));

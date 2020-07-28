@@ -72,7 +72,7 @@ class ProductController {
          
          for (let i = 0; i < files.length; i++) {
              if (files[i].originalname == image_url) 
-                final_image_url = fileService.serializeImageUrl(files[i].filename, 'products');
+                final_image_url = await fileService.serializeImageUrl(files[i].filename, 'products');
 
             images.push(await fileService.serializeImageUrl(files[i].filename, 'products'));
          }
@@ -132,14 +132,14 @@ class ProductController {
 
          if (url_images) {
             const database_files = await piService.findByProduct(id);
-            database_files.map(db => {
+            await Promise.all(database_files.map(async db => {
                 let contains = false;
                 url_images.map((url:string) => {
                    if (url === db.url) contains = true;
                 })
                 if (!contains)
-                   fileService.remove(db.url)
-            })
+                await fileService.remove(db.url)
+            }))
          }
 
          if (files.length > 0) {
@@ -147,7 +147,7 @@ class ProductController {
                 if (files[i].originalname == image_url) 
                     final_image_url = await fileService.serializeImageUrl(files[i].filename, 'products');
    
-                images.push(fileService.serializeImageUrl(files[i].filename, 'products'))
+                images.push(await fileService.serializeImageUrl(files[i].filename, 'products'))
             }
          }
 
@@ -193,11 +193,11 @@ class ProductController {
         if (!id) return response.status(400).json({});
 
         const database_files = await piService.findByProduct(Number(id));
-        database_files.map(db => {
+        await Promise.all(database_files.map(async db => {
             try {
-                fileService.remove(db.url)
+                await fileService.remove(db.url)
             } catch (err) { }
-        })
+        }))
 
         try {
             await service.delete(Number(id));

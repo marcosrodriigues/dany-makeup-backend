@@ -68,9 +68,9 @@ class PromotionController {
         
         for (let i = 0; i < files.length; i++) {
             if (files[i].originalname == final_image_url) 
-                final_image_url = fileService.serializeImageUrl(files[i].filename, 'promotions');
+                final_image_url = await fileService.serializeImageUrl(files[i].filename, 'promotions');
 
-            serialized.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
+            serialized.push(await fileService.serializeImageUrl(files[i].filename, 'promotions'))
         }
 
         const finalPromotion = {
@@ -116,9 +116,9 @@ class PromotionController {
         if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
                 if (files[i].originalname == final_image_url) 
-                    final_image_url = fileService.serializeImageUrl(files[i].filename, 'promotions');
+                    final_image_url = await fileService.serializeImageUrl(files[i].filename, 'promotions');
 
-                serialized.push(fileService.serializeImageUrl(files[i].filename, 'promotions'))
+                serialized.push(await fileService.serializeImageUrl(files[i].filename, 'promotions'))
             }
         }
 
@@ -146,11 +146,11 @@ class PromotionController {
         if (!id) return response.status(400).json({ error: 'No promotion provided! '});
 
         const database_files = await promotionImagesService.findByPromotion(Number(id));
-        database_files.map(async db => {
+        await Promise.all(database_files.map(async db => {
             const fileFromProduct = await productImagesService.existsByUrl(db.url)
             if (fileFromProduct === false)
-                 fileService.remove(db.url)
-        })
+                await fileService.remove(db.url)
+        }))
 
         try {
             await service.delete(Number(id));

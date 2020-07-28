@@ -61,7 +61,7 @@ class ManufacturerController {
         const { file } = request;
 
         if (!file) return response.status(400).json({ error: "No image provided!" });
-        const image_url = fileService.serializeImageUrl(file.filename, 'manufacturers');
+        const image_url = await fileService.serializeImageUrl(file.filename, 'manufacturers');
         
         const manufacturer = {
             name,
@@ -90,7 +90,7 @@ class ManufacturerController {
 
         let manufacturer: any = { id, name, description, image_url };
        
-        manufacturer = fileService.deleteFileAndSerializeNewFile(file, service, manufacturer, 'manufacturers')
+        manufacturer = await fileService.deleteFileAndSerializeNewFile(file, service, manufacturer, 'manufacturers')
        
         try {
             await service.update({ manufacturer });
