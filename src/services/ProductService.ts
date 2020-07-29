@@ -117,6 +117,20 @@ class ProductService {
             throw err;
         }
     }
+    
+    async onlyProduct(id: number) {
+        try {
+            const prod = await select('products', {
+                fields: [],
+                conditions: [
+                    ['id', '=', id]
+                ]
+            })[0]
+            return prod;
+        } catch (err) {
+            throw err;
+        }
+    }
 
     async store(data = { product: {}, images: [] as string[], categorys: [], stocks: [] }) {
         const { product, images, categorys, stocks } = data;
@@ -155,6 +169,19 @@ class ProductService {
 
         } catch (err) {
             throw err;
+        }
+    }
+
+    async save(product: any) {
+        try {
+            await update('products', {
+                data: product,
+                conditions: [
+                    ['id', '=', product.id]
+                ]
+            })
+        } catch (error) {
+            throw error;
         }
     }
 

@@ -16,7 +16,6 @@ export async function up(knex: Knex) {
         table.string('postback_url');//": null,
         
         table.string('payment_method');//": "credit_card",
-        table.string('capture_method');//": "ecommerce",
         table.string('antifraud_score');//": null,
 
         table.string('card_holder_name');//": "Morpheus Fishburne",

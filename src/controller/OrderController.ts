@@ -35,6 +35,12 @@ class OrderController {
 
     async byUser(request: Request, response: Response) {
         const { user_id } = request.params;
+        const {
+            page = 1,
+            limit = 5
+        } = request.query;
+
+        const offset = Number(limit) * (Number(page) - 1);
 
 
         const options = {
@@ -42,7 +48,8 @@ class OrderController {
                 user_id
             },
             pagination: {
-                
+                limit,
+                offset
             }
         }
 
@@ -68,15 +75,9 @@ class OrderController {
     }
     async store(request: Request, response: Response) { 
         const { order } = request.body;
-        
-        /**
-         * order: user_id, final_value, delivery
-         * item: items list
-         * transactions: payment, final_value
-         */
-
         try {
             await service.store({ order });
+
             return response.json({ message: 'success' })
         } catch (error) {
             console.log('error store order', error)

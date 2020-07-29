@@ -9,6 +9,7 @@ export async function up(knex: Knex) {
         table.integer('quantity').notNullable()
         table.decimal('unit_price', 10, 2).notNullable();
         table.string('description');
+        table.string('type');
         table.dateTime('created_at').defaultTo(convertToDatabaseDate(new Date()));
 
         table.integer('promotion_id').unsigned();
@@ -18,7 +19,7 @@ export async function up(knex: Knex) {
 
         table.foreign('promotion_id').references('promotions.id');
         table.foreign('product_id').references('products.id');
-        table.foreign('order_id').references('orders.id');
+        table.foreign('order_id').references('orders.id').onDelete('cascade');
     }); 
 }
 

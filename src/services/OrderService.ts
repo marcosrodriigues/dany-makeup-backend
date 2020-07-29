@@ -1,7 +1,10 @@
-import { buildConditions, count, select } from "../database/sqlBuilder";
-import { isOrderValid } from "../util/util";
-import connection from "../database/connection";
+import { buildConditions, count, select, insert, update } from "../database/sqlBuilder";
+import { isOrderValid, convertToDatabaseDate } from "../util/util";
+import ItemService from './ItemService'
+import TransactionService from "./TransactionService";
 
+const itemService = new ItemService();
+const transactionService = new TransactionService();
 class OrderService {
     async find(params = { filter: { }, pagination: {} }) {
         const { filter, pagination } = params;
@@ -17,7 +20,13 @@ class OrderService {
             const result = await select('orders', options);
             const counter = await count('orders', options);
 
-            return { orders: result , count: counter[0].count  };
+            const orders = await Promise.all(result.map(async ord => {
+                ord.items = await itemService.findByOrder(ord.id);
+                ord.transaction = await transactionService.findById(ord.transaction_id)
+                return ord;
+            }))
+
+            return { orders , count: counter[0].count  };
         } catch (err) {
             throw err;
         }
@@ -43,28 +52,61 @@ class OrderService {
             throw "!ORDER INVALID!";
         }
         const { user, payment, purchase } = order;
+        const { items, delivery, resume } = purchase;
+        const { address } = payment;
 
-        console.log(order);
-
-       /**
-         * cadastro todos os itens no banco de dados e removo a quantidade do estoque
-         * crio o pedido do usuário, onde terão os itens e o id do usuário
-         *  pedido do usuario vai ter: lista de itens, o frete, usuário
-         * separo os dados da transação e envio pro pagarme
-         */
         try {
-            //const trx = await connection.transaction();
-            //crio a order com o user_id e o address_id
-            //crio todos os itens da order e calculo o valor final da order
-            //cadastro a transação no banco de dados
-            //atribuo o valor total pro order
-            //atribuo o id da transação pro order
-            //salvo o order no banco
-            //tento executar a cobrança
-            //retorno
-            //const items_id = await trx('orders', )
+            const order_db = { user_id: user.id, price: resume.total, address_id: address.id, created_at: convertToDatabaseDate(new Date()) };
+            const order_id = (await insert('orders', order_db))[0];
+            const n_items = items.map(item => ({
+                ...item,
+                order_id
+            }))
+
+            await itemService.stores(n_items);
+
+            if (Number(delivery.code) === 1) {
+                const dl = {
+                    cep: delivery.cep,
+                    code: delivery.code,
+                    deadline: delivery.deadline,
+                    name: delivery.name,
+                    order_id,
+                    store_id: delivery.store.id
+                }
+                await insert('delivery', dl);
+            } else {
+                await insert('delivery', { ...delivery, order_id });
+            }
+
+            await insert('order_resume', 
+                { ...resume, order_id }
+            );
+
+            try {
+                const trs = {
+                    ...order,
+                    purchase: {
+                        ...purchase,
+                        items: n_items
+                    }
+                };
+                const transaction_id = await transactionService.store(trs);
+                await update('orders', {
+                    data: {
+                        ...order_db,
+                        transaction_id
+                    },
+                    conditions:[
+                        ['id', '=', order_id]
+                    ]
+                })
+                return;
+            } catch (error) {
+                throw `NOT POSSIBLE TO MAKE TRANSACTION ${error}`;
+            }
         } catch (error) {
-            throw error;
+            throw `NOT POSSÍBLE TO SAVE ORDER ${error}`;
         }
     }
 

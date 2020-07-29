@@ -6,6 +6,7 @@ export async function up(knex: Knex) {
         table.increments('id').primary();
 
         table.dateTime('created_at').defaultTo(convertToDatabaseDate(new Date()));
+        
 
         table.decimal('price', 10,2);
 

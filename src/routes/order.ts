@@ -7,7 +7,7 @@ const controller = new OrderController();
 
 routes.get('/orders', controller.index)
 routes.get('/orders/:id', controller.show)
-routes.get('/orders/user/:id', controller.byUser)
+routes.get('/orders/user/:user_id', controller.byUser)
 routes.post('/orders', controller.store)
 routes.put('/orders/:id', controller.update);
 

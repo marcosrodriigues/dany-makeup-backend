@@ -3,7 +3,6 @@ import pagarme from 'pagarme';
 import ICreditCard from '../interface/ICreditCard';
 
 const API_KEY = process.env.PAGARME_API_KEY || '';
-
 class PagarMe {
     async generateHash(credit_card: ICreditCard, cliente: any = undefined) {
         const card = this.makeCard(credit_card);
@@ -80,8 +79,16 @@ class PagarMe {
         return card;
     }
 
-    async makeTransaction() {
-        
+    async makeTransaction(transaction: any) {
+        try {
+            const cliente = await this.connect();
+            const response = await cliente.transactions
+                .create(transaction)
+            return response;
+        } catch (error) {
+            console.log('ERROR', error.response)
+            throw error.response;
+        }
     }
 }
 

@@ -66,6 +66,7 @@ export const select = async (table: string, options: ISelectOptions) => {
     if (pagination)
         query.limit(pagination.limit).offset(pagination.offset)
     
+    query.orderBy(`${table}.id`, 'desc')
     try {
         return await query;
     } catch (err) {
