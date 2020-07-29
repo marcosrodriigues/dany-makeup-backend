@@ -91,6 +91,9 @@ class TransactionService {
     }
 
     private makeCustomer(user: any) {
+        const cpf = user.cpf?.replace('.', '').replace('.', '').replace('-', '') || '66680137080'
+        const phone = user.whatsapp?.replace('(', '').replace(')', '').replace('-', '').trim() || '+5548999359779'
+
         const customer = {
             external_id: String(user.id),
             name: user.name,
@@ -100,10 +103,10 @@ class TransactionService {
 
             documents: [{
                 type: 'cpf',
-                number: user.cpf || '66680137080'
+                number: cpf
             }],
             phone_numbers: [
-                user.whatsapp || '+5548999359779'
+                phone
             ],
             birthday: user.birthday
         }

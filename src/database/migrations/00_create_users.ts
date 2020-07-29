@@ -9,6 +9,7 @@ export async function up(knex: Knex) {
         table.string('password');
         table.string('avatar');
         table.string('whatsapp');
+        table.string('cpf');
         table.boolean('removed').defaultTo(false);
         table.dateTime('created_at').defaultTo(convertToDatabaseDate(new Date()));
         table.string('fb_id');
