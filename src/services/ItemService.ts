@@ -6,11 +6,9 @@ const productService = new ProductService();
 
 class ItemService {
     async store(data: any) {
-        if (data.type === 'PROMOTION') {
-            data.promotion_id = data.id;
-        } else if (data.type === 'PRODUCT') {
+        if (data.type === 'PRODUCT') {
             data.product_id = data.id;
-            let product = await productService.onlyProduct(data.id);
+            let product = await productService.onlyProduct(data.product_id);
             product.amount = product.amount - data.quantity;
             await productService.save(product);
         }
@@ -25,6 +23,7 @@ class ItemService {
         const item = {
             name: data.name,
             type: data.type,
+            image_url: data.image_url,
             order_id: data.order_id,
             quantity: data.quantity,
             description: data.description || '',

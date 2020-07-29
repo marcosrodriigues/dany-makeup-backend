@@ -17,7 +17,7 @@ export async function up(knex: Knex) {
 
         table.foreign('user_id').references('users.id');
         table.foreign('address_id').references('address.id');
-        table.foreign('transaction_id').references('transactions.id');
+        table.foreign('transaction_id').references('transactions.id').onDelete('cascade');
     }); 
 }
 

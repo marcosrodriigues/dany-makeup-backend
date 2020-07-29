@@ -18,6 +18,7 @@ export async function up(knex: Knex) {
         table.string('payment_method');//": "credit_card",
         table.string('antifraud_score');//": null,
 
+        table.string('card_name');//": "Morpheus Fishburne",
         table.string('card_holder_name');//": "Morpheus Fishburne",
         table.string('card_last_digits');//": "1111",
         table.string('card_first_digits');//": "411111",

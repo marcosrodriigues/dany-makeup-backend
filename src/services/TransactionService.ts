@@ -48,11 +48,13 @@ class TransactionService {
                 boleto_barcode: created.boleto_barcode,
                 boleto_expiration_date: created.boleto_expiration_date,
                 postback_url: created.postback_url,
+                card_name: payment.credit_card.name,
                 card_holder_name: created.card_holder_name,
                 card_last_digits: created.card_last_digits,
                 card_first_digits: created.card_first_digits,
                 card_brand: created.card_brand
             }
+
             return await this.save(db_transaction);
         } catch(error) {
             throw error;
@@ -101,7 +103,7 @@ class TransactionService {
                 number: user.cpf || '66680137080'
             }],
             phone_numbers: [
-                user.whatsapp || '+5531975029572'
+                user.whatsapp || '+5548999359779'
             ],
             birthday: user.birthday
         }

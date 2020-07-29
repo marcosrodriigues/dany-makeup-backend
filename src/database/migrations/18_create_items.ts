@@ -9,6 +9,7 @@ export async function up(knex: Knex) {
         table.integer('quantity').notNullable()
         table.decimal('unit_price', 10, 2).notNullable();
         table.string('description');
+        table.string('image_url').notNullable();;
         table.string('type');
         table.dateTime('created_at').defaultTo(convertToDatabaseDate(new Date()));
 

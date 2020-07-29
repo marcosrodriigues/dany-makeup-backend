@@ -120,12 +120,12 @@ class ProductService {
     
     async onlyProduct(id: number) {
         try {
-            const prod = await select('products', {
+            const prod = (await select('products', {
                 fields: [],
                 conditions: [
                     ['id', '=', id]
                 ]
-            })[0]
+            }))[0]
             return prod;
         } catch (err) {
             throw err;

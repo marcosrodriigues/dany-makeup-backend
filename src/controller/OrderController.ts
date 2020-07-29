@@ -1,6 +1,5 @@
 import { Response, Request } from "express";
 import OrderService from "../services/OrderService";
-import { isOrderValid } from "../util/util";
 
 const service = new OrderService();
 
@@ -66,7 +65,7 @@ class OrderController {
         const { id } = request.params;
 
         try {   
-            const order = service.findOne(Number(id));
+            const order = await service.findOne(Number(id));
             return response.json(order);
         } catch (error) {
             console.log("ERROR ORDER CONTROLLER - SHOW\n");

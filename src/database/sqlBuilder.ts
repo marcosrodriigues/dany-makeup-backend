@@ -11,6 +11,7 @@ export const insert = async (table: string, data: {}) => {
 
 interface ISelectOptions {
     fields: [],
+    orderBy?: [string, string],
     conditions?: [[string, string, any]],
     orConditions?: [[string, string, any]],
     andConditions?: [[string, string, any]],
@@ -21,7 +22,10 @@ interface ISelectOptions {
     pagination?: { limit: number, offset: number }
 }
 export const select = async (table: string, options: ISelectOptions) => {
-    const { fields, conditions, orConditions, andConditions, inConditions, joins, leftJoins, rightJoins, pagination } = options;
+    const { fields, orderBy, pagination,
+        conditions, orConditions, andConditions, inConditions, 
+        joins, leftJoins, rightJoins 
+    } = options;
     const selected_fields = fields.length > 0 ? fields : `${table}.*`
 
     var query = connection(table)
@@ -63,10 +67,12 @@ export const select = async (table: string, options: ISelectOptions) => {
         query.whereIn(...whereIn)
     })
 
+    if (orderBy)
+        query.orderBy(...orderBy)
+        
     if (pagination)
         query.limit(pagination.limit).offset(pagination.offset)
     
-    query.orderBy(`${table}.id`, 'desc')
     try {
         return await query;
     } catch (err) {

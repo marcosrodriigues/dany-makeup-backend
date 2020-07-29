@@ -2,9 +2,17 @@ import { buildConditions, count, select, insert, update } from "../database/sqlB
 import { isOrderValid, convertToDatabaseDate } from "../util/util";
 import ItemService from './ItemService'
 import TransactionService from "./TransactionService";
+import ResumeService from "./ResumeService";
+import DeliveryService from "./DeliveryService";
+import AddressService from "./AddressService";
+import StoreService from "./StoreService";
 
 const itemService = new ItemService();
 const transactionService = new TransactionService();
+const resumeService = new ResumeService();
+const deliveryService = new DeliveryService();
+const addressService = new AddressService();
+const storeService = new StoreService();
 class OrderService {
     async find(params = { filter: { }, pagination: {} }) {
         const { filter, pagination } = params;
@@ -15,7 +23,8 @@ class OrderService {
             const options: any  = {
                 fields: ['*'],
                 conditions,
-                pagination
+                pagination,
+                orderBy: ['id', 'desc']
             }
             const result = await select('orders', options);
             const counter = await count('orders', options);
@@ -40,6 +49,16 @@ class OrderService {
                 fields: [],
                 conditions: [['id', '=', id]]
             }))[0];
+
+            order.items = await itemService.findByOrder(order.id);
+            order.transaction = await transactionService.findById(order.transaction_id)
+            order.resume = await resumeService.findByOrder(order.id);
+            order.delivery = await deliveryService.findByOrder(order.id);
+            order.address = await addressService.findOne(order.address_id);
+
+            if(order.delivery && order.delivery.store_id !== null)
+                order.delivery.store = await storeService.findOne(order.delivery.store_id);
+
             return order;
         } catch (err) {
             throw err;
@@ -51,20 +70,34 @@ class OrderService {
         if (!isOrderValid(order)) {
             throw "!ORDER INVALID!";
         }
+
         const { user, payment, purchase } = order;
         const { items, delivery, resume } = purchase;
         const { address } = payment;
 
+        const order_db = { user_id: user.id, price: resume.total, address_id: address.id, created_at: convertToDatabaseDate(new Date()) };
+        let order_id: number = 0;
+
         try {
-            const order_db = { user_id: user.id, price: resume.total, address_id: address.id, created_at: convertToDatabaseDate(new Date()) };
-            const order_id = (await insert('orders', order_db))[0];
-            const n_items = items.map(item => ({
-                ...item,
-                order_id
-            }))
+            order_id = (await insert('orders', order_db))[0];
+        } catch (error) {
+            console.log('ERROR SAVING ORDER', error);
+            throw error;
+        }
 
+        let n_items: any = items.map(item => ({
+            ...item,
+            order_id
+        }));
+
+        try {
             await itemService.stores(n_items);
+        } catch (error) {
+            console.log('ERROR SAVING ITEMS', error);
+            throw error;
+        }
 
+        try {
             if (Number(delivery.code) === 1) {
                 const dl = {
                     cep: delivery.cep,
@@ -78,40 +111,50 @@ class OrderService {
             } else {
                 await insert('delivery', { ...delivery, order_id });
             }
+        } catch (error) {
+            console.log('ERROR SAVING DELIVERY', error)
+            throw error;
+        }
 
+        try {
             await insert('order_resume', 
                 { ...resume, order_id }
             );
-
-            try {
-                const trs = {
-                    ...order,
-                    purchase: {
-                        ...purchase,
-                        items: n_items
-                    }
-                };
-                const transaction_id = await transactionService.store(trs);
-                await update('orders', {
-                    data: {
-                        ...order_db,
-                        transaction_id
-                    },
-                    conditions:[
-                        ['id', '=', order_id]
-                    ]
-                })
-                return;
-            } catch (error) {
-                throw `NOT POSSIBLE TO MAKE TRANSACTION ${error}`;
-            }
         } catch (error) {
-            throw `NOT POSSÍBLE TO SAVE ORDER ${error}`;
+            console.log('ERROR SAVING RESUME', error);
+            throw error;
         }
-    }
 
-    async update() {
+        let transaction_id = 0;
+        try {
+            const trs = {
+                ...order,
+                purchase: {
+                    ...purchase,
+                    items: n_items
+                }
+            };
+            transaction_id = await transactionService.store(trs);
+        } catch (error) {
+            console.log("ERROR MAKE TRANSACTION", error);
+            throw `NOT POSSIBLE TO MAKE TRANSACTION ${error.response}`;
+        }
 
+        try {
+            await update('orders', {
+                data: {
+                    ...order_db,
+                    transaction_id
+                },
+                conditions:[
+                    ['id', '=', order_id]
+                ]
+            })
+            return;
+        } catch (error) {
+            console.log('ERROR UPDATE ORDER WITH TRANSACTION', error)
+            throw error;
+        }
     }
 }
 
