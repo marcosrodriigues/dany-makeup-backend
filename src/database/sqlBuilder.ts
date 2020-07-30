@@ -11,7 +11,7 @@ export const insert = async (table: string, data: {}) => {
 
 interface ISelectOptions {
     fields: [],
-    orderBy?: [string, string],
+    orderBy?: [[string, string]],
     conditions?: [[string, string, any]],
     orConditions?: [[string, string, any]],
     andConditions?: [[string, string, any]],
@@ -19,10 +19,11 @@ interface ISelectOptions {
     joins?: [[string, string, any]],
     leftJoins?: [[string, string, any]],
     rightJoins?: [[string, string, any]],
-    pagination?: { limit: number, offset: number }
+    pagination?: { limit: number, offset: number },
+    groupBy?: [string]
 }
 export const select = async (table: string, options: ISelectOptions) => {
-    const { fields, orderBy, pagination,
+    const { fields, orderBy, pagination, groupBy,
         conditions, orConditions, andConditions, inConditions, 
         joins, leftJoins, rightJoins 
     } = options;
@@ -49,6 +50,10 @@ export const select = async (table: string, options: ISelectOptions) => {
         query.rightJoin(...join)
     });
 
+    groupBy?.forEach(group => {
+        query.groupBy(group)
+    })
+
     if (andConditions)
         query.where(builder => {
             andConditions.forEach(condition => {
@@ -67,8 +72,9 @@ export const select = async (table: string, options: ISelectOptions) => {
         query.whereIn(...whereIn)
     })
 
-    if (orderBy)
-        query.orderBy(...orderBy)
+    orderBy?.forEach(order => {
+        query.orderByRaw(order.join(' '));
+    })
         
     if (pagination)
         query.limit(pagination.limit).offset(pagination.offset)

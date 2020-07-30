@@ -226,6 +226,15 @@ class ProductController {
 
      }
 
+     async most_sold (request:Request, response: Response) {
+        try {
+            const products = await service.findMostSold();
+            return response.json(products)
+        } catch (error) {
+            console.log ("error on  get most sold", error)
+            return response.status (400).json (error)
+        }
+     }
 }
 
 export default ProductController;

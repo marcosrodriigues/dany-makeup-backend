@@ -56,7 +56,7 @@ class OrderController {
             const { orders } = await service.find(options);
             return response.json(orders);
         } catch (error) {
-            console.log("ERROR ORDER CONTROLLER - BYUSER\n");
+            console.log("ERROR ORDER CONTROLLER - BYUSER\n", error);
             return response.status(400).json({ error })   
         }
     }

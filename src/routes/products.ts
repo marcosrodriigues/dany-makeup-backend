@@ -16,5 +16,6 @@ routes.put('/products', uploads.array('images[]'), controller.update)
 routes.delete('/products/:id', controller.delete)
 
 routes.get('/mobile/products', controller.list)
+routes.get('/mobile/most_sold', controller.most_sold)
 
 export default routes;

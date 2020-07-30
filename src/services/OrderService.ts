@@ -24,7 +24,7 @@ class OrderService {
                 fields: ['*'],
                 conditions,
                 pagination,
-                orderBy: ['id', 'desc']
+                orderBy: [['id', 'desc']]
             }
             const result = await select('orders', options);
             const counter = await count('orders', options);

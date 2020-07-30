@@ -284,6 +284,9 @@ class ProductService {
             options.joins = [
                 ['category_product', 'category_product.product_id', 'products.id']
             ]
+            options.andConditions = [
+                ['category_product.category_id', '=', category_id]
+            ]
         }
 
         if (search) {
@@ -301,6 +304,32 @@ class ProductService {
             return products
         } catch (err) {
             throw err;
+        }
+    }
+
+    async findMostSold() {
+        const options: any = {
+            fields: ['products.*'],
+            leftJoins: [
+                ['items', 'items.product_id', 'products.id']
+            ],
+            orderBy: [
+                [`COUNT('item.id')`, 'desc']
+            ],
+            groupBy: [
+                'products.id', 'products.name'
+            ],
+            pagination: {
+                limit: 7,
+                offset: 0,
+            }
+        }
+
+        try {
+            const products = await select('products', options);
+            return products;
+        } catch (error) { 
+            throw error; 
         }
     }
 }
