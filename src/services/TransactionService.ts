@@ -145,7 +145,7 @@ class TransactionService {
         return purch_items;
     }
 
-    private makeCreditCard(payment) {
+    private makeCreditCard(payment: any) {
         const transaction: any = {
             payment_method: payment.payment_method,
             async: false,
@@ -157,7 +157,7 @@ class TransactionService {
         return transaction;
     }
 
-    private makeBilling(address) {
+    private makeBilling(address: any) {
         const billing = {
             name: address.name,
             address: {
@@ -174,7 +174,7 @@ class TransactionService {
         return billing;
     }
 
-    private makeShipping(address, delivery) {
+    private makeShipping(address: any, delivery: any) {
         const shipping = {
             name: address.name,
             fee: this.convertToCents(delivery.value),
@@ -192,7 +192,7 @@ class TransactionService {
         return shipping;
     }
 
-    private makeBoleto(payment) {
+    private makeBoleto(payment: any) {
         const boleto = {
             payment_method: payment.payment_method,
             soft_descriptor: 'Dany MakeUp App',
@@ -202,7 +202,7 @@ class TransactionService {
 
         return boleto;
     }
-    private FormataStringData(data) {
+    private FormataStringData(data: any) {
         var dia  = data.split("/")[0];
         var mes  = data.split("/")[1];
         var ano  = data.split("/")[2];
