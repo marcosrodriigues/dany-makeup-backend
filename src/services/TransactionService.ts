@@ -30,17 +30,6 @@ class TransactionService {
         transaction.items = this.makeItems(items);
         
         try {
-    
-            //AQUI SALVAR A TRANSAÇÃO ANTES PRA TENTAR FAZER ELA DPS DENOVO
-            /**
-             * const db_transaction = convertTransactionToDbTransaction(transaction); com status pending
-             * const transaction_id = await insert
-             * try Pagarme.makeTransaction
-             * update transaction on db
-             * 
-             * final: return transaction_id
-             */
-            
             const created = await PagarME.makeTransaction(transaction);
             
             const db_transaction = {
@@ -68,7 +57,23 @@ class TransactionService {
 
             return await this.save(db_transaction);
         } catch(error) {
-            throw error;
+            console.log('ERROR MAKING TRANSACTION ', transaction)
+            try {
+                const db_transaction = {
+                    status: 'pending',
+                    date_created: convertToDatabaseDate(new Date()),
+                    amount: transaction.amount,
+                    payment_method: payment.payment_method,
+                    card_name: payment.credit_card.name,
+                    card_holder_name: payment.credit_card.card_holder_name,
+                    card_last_digits: payment.credit_card.card_last_digits,
+                    card_first_digits: payment.credit_card.card_first_digits,
+                }
+                return await this.save(db_transaction);
+            } catch (error_db) {
+                console.log('ERROR SAVING TRANSACTION FAILURE TO DATABASE', error_db)
+                throw error_db;
+            }
         }
     }
 

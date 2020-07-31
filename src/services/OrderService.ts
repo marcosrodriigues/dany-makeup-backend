@@ -111,7 +111,7 @@ class OrderService {
         }
 
         try {
-            if (Number(delivery.code) === 1) {
+            if (Number(delivery.code) === 1) { //entrega em maos
                 const dl = {
                     cep: delivery.cep,
                     code: delivery.code,
