@@ -63,7 +63,6 @@ class ProductService {
         }
     }
 
-
     async findOne(id: number) {
         if (!id) throw "Product not provided"
 
@@ -271,13 +270,14 @@ class ProductService {
         }
     }
 
-    async findByCategoryAndSearch(data = { category_id: 0, search: '' }) {
-        const { category_id, search } = data;
+    async findByCategoryAndSearch(data = { category_id: 0, search: '', pagination: {} }) {
+        const { category_id, search, pagination } = data;
         const options: any = {
             fields: ['products.*'],
             conditions: [
                 ['products.removed', '=', false]
-            ]
+            ],
+            pagination
         }
 
         if (category_id !== 0) {
@@ -298,10 +298,10 @@ class ProductService {
 
             options.orConditions = buildConditions({ filter });
         }
-        
         try {
             const products = await select('products', options);
-            return products
+            const counter = await count('products', options);
+            return { products, count: counter[0].count }
         } catch (err) {
             throw err;
         }

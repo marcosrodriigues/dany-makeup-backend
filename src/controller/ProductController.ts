@@ -210,14 +210,27 @@ class ProductController {
     async list(request:Request, response: Response) {
         const {
             category_id = 0,
-            search = ''
+            search = '',
+            page = 1,
+            limit = 5
         } = request.query;
 
+        const offset = Number(limit) * (Number(page) - 1);
+
+        const pagination = {
+            offset,
+            limit,
+        };
+
         try {
-            const products = await service.findByCategoryAndSearch({
+            const { products, count } = await service.findByCategoryAndSearch({
                 category_id: Number(category_id),
-                search: String(search)
+                search: String(search),
+                pagination
             });
+
+            response.setHeader("x-total-count", Number(count));
+            response.setHeader("Access-Control-Expose-Headers", "x-total-count");
             return response.json(products);
         } catch (err) {
             console.log(err);
