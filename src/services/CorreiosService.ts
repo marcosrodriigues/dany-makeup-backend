@@ -24,14 +24,22 @@ class CorreiosService {
         if (cep === '') return;
         try {
             return await soap.createClient(URL, async(err: any, client: any) => {
-                if (err) throw err;
+                if (err) {
+                    throw `ERRO CONNECT CORREIOS SERVICE: ${err}`;
+                }
                 params.sCepDestino = cep;
 
-                return await client.CalcPrecoPrazo(params, function (err: any, result: any) {
-                    if (err) throw err;
-                    const servicos = result.CalcPrecoPrazoResult.Servicos.cServico;
-                    cb(servicos);
-                });
+                try {
+                    return await client.CalcPrecoPrazo(params, function (err: any, result: any) {
+                        if (err) {
+                            throw `ERROR CALC_PRECO_PRAZO CORREIOS SERVICE: ${err}`;
+                        }
+                        const servicos = result.CalcPrecoPrazoResult.Servicos.cServico;
+                        cb(servicos);
+                    });
+                } catch (error) {
+                    throw error;
+                }
             });            
         } catch (err) {
             throw err
