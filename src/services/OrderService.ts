@@ -98,7 +98,7 @@ class OrderService {
             throw error;
         }
 
-        let n_items: any = items.map(item => ({
+        let n_items: any = items.map((item: any) => ({
             ...item,
             order_id
         }));
