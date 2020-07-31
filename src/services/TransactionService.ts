@@ -30,6 +30,17 @@ class TransactionService {
         transaction.items = this.makeItems(items);
         
         try {
+    
+            //AQUI SALVAR A TRANSAÇÃO ANTES PRA TENTAR FAZER ELA DPS DENOVO
+            /**
+             * const db_transaction = convertTransactionToDbTransaction(transaction); com status pending
+             * const transaction_id = await insert
+             * try Pagarme.makeTransaction
+             * update transaction on db
+             * 
+             * final: return transaction_id
+             */
+            
             const created = await PagarME.makeTransaction(transaction);
             
             const db_transaction = {

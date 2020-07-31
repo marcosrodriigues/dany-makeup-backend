@@ -7,13 +7,26 @@ class OrderController {
     async index(request: Request, response: Response) {
         const {
             page = 1,
-            limit = 5
+            limit = 5,
+            search = ''
         } = request.query;
 
         const offset = Number(limit) * (Number(page) - 1);
 
+        const status = String(search).toUpperCase() === 'PAGO' ? 'paid' : ''
+
         const options = {
-            filter: { },
+            filter: {
+                items: {
+                    name: search
+                },
+                users: {
+                    name: search
+                },
+                transactions: {
+                    status
+                }
+            },
             pagination: {
                 limit,
                 offset
@@ -27,7 +40,7 @@ class OrderController {
             response.setHeader("Access-Control-Expose-Headers", "x-total-count");
             return response.json(orders);
         } catch (error) {
-            console.log("ERROR ORDER CONTROLLER - INDEX\n");
+            console.log("ERROR ORDER CONTROLLER - INDEX\n", error);
             return response.status(400).json({ error })   
         }
     }

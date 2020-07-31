@@ -6,6 +6,7 @@ import ResumeService from "./ResumeService";
 import DeliveryService from "./DeliveryService";
 import AddressService from "./AddressService";
 import StoreService from "./StoreService";
+import UserService from "./UserService";
 
 const itemService = new ItemService();
 const transactionService = new TransactionService();
@@ -13,6 +14,7 @@ const resumeService = new ResumeService();
 const deliveryService = new DeliveryService();
 const addressService = new AddressService();
 const storeService = new StoreService();
+const userService = new UserService()
 class OrderService {
     async find(params = { filter: { }, pagination: {} }) {
         const { filter, pagination } = params;
@@ -21,10 +23,17 @@ class OrderService {
 
         try {
             const options: any  = {
-                fields: ['*'],
+                fields: [],
                 conditions,
                 pagination,
-                orderBy: [['id', 'desc']]
+                orderBy: [['id', 'desc']],
+                joins: [
+                    ['items', 'items.order_id', 'orders.id'],
+                    ['users', 'orders.user_id', 'users.id'],
+                ],
+                leftJoins: [
+                    ['transactions', 'transactions.id', 'orders.transaction_id']
+                ]
             }
             const result = await select('orders', options);
             const counter = await count('orders', options);
@@ -32,6 +41,8 @@ class OrderService {
             const orders = await Promise.all(result.map(async ord => {
                 ord.items = await itemService.findByOrder(ord.id);
                 ord.transaction = await transactionService.findById(ord.transaction_id)
+                const { user } = await userService.findOne(ord.user_id);
+                ord.user = user;
                 return ord;
             }))
 
@@ -55,6 +66,8 @@ class OrderService {
             order.resume = await resumeService.findByOrder(order.id);
             order.delivery = await deliveryService.findByOrder(order.id);
             order.address = await addressService.findOne(order.address_id);
+            const { user } = await userService.findOne(order.user_id);
+            order.user = user;
 
             if(order.delivery && order.delivery.store_id !== null)
                 order.delivery.store = await storeService.findOne(order.delivery.store_id);
